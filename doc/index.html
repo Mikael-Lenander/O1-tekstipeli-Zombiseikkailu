@@ -1,0 +1,7 @@
+<html><head><title>Redirect</title><meta http-equiv="refresh" content="0; URL=o1/adventure/index.html"></head><body onload='/* Customizations for CS-A1110: */
+$("ol#linearization").find("li").each(function() { var name = $(this).attr("name"); var appStuff = ["scala.App","scala.DelayedInit","scala.swing.SimpleSwingApplication","scala.swing.Reactor","scala.swing.SwingApplication"];if ($.inArray(name, appStuff) > -1) { $(this).trigger("click");}});
+$("div#packages").find("li[name=\"o1.util\"]").css("display", "none");
+$("dl.paramcmts dd.cmt").css("margin-left", "140px");
+$("ol#linearization").find("li").each(function() { var name = $(this).attr("name"); if (name == "o1" || name == "o1.util.ShortcutAliases") { $(this).trigger("click");}});
+$("div#packages li.indented0").css("display", "none");
+'>Redirecting to package <a href="o1/adventure/index.html">o1/adventure</a>.</body></html>
