@@ -6,17 +6,17 @@ sealed trait Direction {
 }
 
 object North extends Direction {
-  val direction = "north"
+  val direction = "pohjoinen"
 }
 
 object East extends Direction {
-  val direction = "east"
+  val direction = "itä"
 }
 
 object South extends Direction {
-  val direction = "south"
+  val direction = "etelä"
 }
 
 object West extends Direction {
-  val direction = "north"
+  val direction = "länsi"
 }

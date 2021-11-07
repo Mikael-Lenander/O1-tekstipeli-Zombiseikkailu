@@ -14,7 +14,6 @@ object Player {
   val MaxFullness = 25
 }
 
-
 class Player(startingArea: Area) {
 
   private var currentLocation = startingArea        // gatherer: changes in relation to the previous location
@@ -27,7 +26,8 @@ class Player(startingArea: Area) {
     if (number > 0)
       this.health = min(this.health + number, Player.MaxHealth)
     else
-      this.health = max(this.health - number, 0)
+      this.health = max(this.health + number, 0)
+    println(s"elämät: ${this.health}")
   }
 
   def changeFullness(number: Int) = {
@@ -37,21 +37,19 @@ class Player(startingArea: Area) {
       this.fullness = max(this.fullness - number, 0)
   }
 
-  def drop(itemName: String): String = {
-    val dropped = this.items.remove(itemName)
-    dropped.foreach(item => this.location.addItem(item))
-    dropped.map(item => s"You drop the ${item.name}.").getOrElse("You don't have that!")
-  }
+  def isAlive = this.fullness > 0 && this.health > 0
 
-  def examine(itemName: String): String = this.items.get(itemName)
-    .map(item => s"You look closely at the ${item.name}.\n${item.description}")
-    .getOrElse("If you want to examine something, you need to pick it up first.")
+  def examine(itemName: String): String =
+    this.items.get(itemName).map(_.description).getOrElse(s"Sinulla ei ole esinettä '$itemName'.")
 
   def get(itemName: String): String = {
       val item = this.location.removeItem(itemName)
       item.foreach(item => this.items(item.name) = item)
-      item.map(item => s"You pick up the ${item.name}.").getOrElse(s"There is no $itemName here to pick up.")
+      println(this.location.items)
+      item.map(item => s"Poimit esineen '${item.name}'. ${item.description}").getOrElse(s"Alueella ei ole esinettä $itemName")
   }
+
+  def selectItem(itemName: String): Option[Item] = this.items.get(itemName)
 
   def has(itemName: String): Boolean = this.items.contains(itemName)
 
@@ -65,23 +63,16 @@ class Player(startingArea: Area) {
   /** Returns the current location of the player. */
   def location = this.currentLocation
 
-
   /** Attempts to move the player in the given direction. This is successful if there
     * is an exit from the player's current location towards the direction name. Returns
     * a description of the result: "You go DIRECTION." or "You can't go DIRECTION." */
-  def go(direction: String) = {
+  def go(direction: Direction) = {
     val destination = this.location.neighbor(direction)
+    // msg kertoo, miten alueelta lähteminen mahdollisesti vaikutti pelaajan tilaan.
+    val msg = destination.map(_ => this.currentLocation.leave(this, direction)).getOrElse("")
     this.currentLocation = destination.getOrElse(this.currentLocation)
-    if (destination.isDefined) "You go " + direction + "." else "You can't go " + direction + "."
+    if (destination.isDefined) msg else "Et voi mennä suuntaan " + direction + "."
   }
-
-
-  /** Causes the player to rest for a short while (this has no substantial effect in game terms).
-    * Returns a description of what happened. */
-  def rest() = {
-    "You rest for a while. Better get a move on, though."
-  }
-
 
   /** Signals that the player wants to quit the game. Returns a description of what happened within
     * the game as a result (which is the empty string, in this case). */
@@ -89,7 +80,6 @@ class Player(startingArea: Area) {
     this.quitCommandGiven = true
     ""
   }
-
 
   /** Returns a brief description of the player's state, for debugging purposes. */
   override def toString = "Now at: " + this.location.name
