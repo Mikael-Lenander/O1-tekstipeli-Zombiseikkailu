@@ -15,19 +15,19 @@ class Adventure {
   val title = "Zobmie World"
 
   private val survivorVillage = new Area("Selviytyjien kylä", "")
-  private val road1 = new Area("Maantie", "Kaupunki vieressä")
-  private val city = new Area("Kaupunki", "", new ZombieHorde(30, 2, ))
+  private val road1 = new Area("Maantie", "Kävelet maantietä kohti itää.")
+  private val city = new Area("Kaupunki", "", Some(new ZombieHorde(30, 2, Vector(East, South, West))))
   private val hospital = new Area("Sairaala", "")
   private val weaponShop = new Area("Asekauppa", "")
   private val groceryStore = new Area("Ruokakauppa", "")
   private val crossRoads = new Area("Risteys", "")
   private val road2 = new Area("Maantie", "Zombeja lähellä")
-  private val road3 = new Area("Maantie", "Zombeja")
+  private val road3 = new Area("Maantie", "Zombeja", Some(new ZombieHorde(3, 0, Vector(South))))
   private val weaponStash = new Area("Asekätkö", "")
   private val forest1 = new Area("Metsä", "Sisäänkäynti")
   private val forest2 = new Area("Metsä", "Tyhjää")
   private val forest3 = new Area("Metsä", "Pöllö")
-  private val forest4 = new Area("Metsä", "Zombeja")
+  private val forest4 = new Area("Metsä", "Zombeja", Some(new ZombieHorde(5, 0, Vector(North))))
   private val forest5 = new Area("Metsä", "Avain!")
   private val survivorsHome = new Area("Selviytyjän koti", "")
   private val destination = survivorVillage
@@ -49,10 +49,17 @@ class Adventure {
           forest5.setNeighbors(Vector(South -> forest4))
     survivorsHome.setNeighbors(Vector(East -> forest1))
 
-
-
   /** The character that the player controls in the game. */
   val player = new Player(survivorVillage)
+
+  hospital.addItem(new Medkit(player, 3))
+  weaponShop.addItem(new Weapon("Puukko",
+    "Puukolla voit nirhata zombeja lähietäisyydeltä. Huonona puolena joudut päästämään zombit kovin lähelle...", player, false))
+  groceryStore.addItem(new Food("Myslipatukka", "Pitäisi pitää nälän loitolla - ainakin hetken.", player, 5))
+  weaponStash.addItem(new Weapon("Haulikko",
+    "Haulikolla voit ampua zombit turvallisesti kaukaa. Valitettavasti luoteja on vain viisi, joten käytä niitä sääteliäästi.", player, false))
+  forest3.addItem(new Food("pöllö", "Tästä pitäisi riittää ruokaa pitkäksi aikaa :P.", player, 10))
+  forest5.addItem(new Key(player))
 
   /** The number of turns that have passed since the start of the game. */
   var turnCount = 0

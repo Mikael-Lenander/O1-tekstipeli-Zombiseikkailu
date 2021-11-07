@@ -32,3 +32,7 @@ class Food(name: String, description: String, player: Player, energy: Int) exten
 class Medkit(player: Player, healthIncrease: Int) extends Item("Ensiapupakkaus", "Kuvaus", player) {
   def use(): Unit = {}
 }
+
+class Key(player: Player) extends Item("avain", "Avain!", player) {
+  def use(): Unit = {}
+}
