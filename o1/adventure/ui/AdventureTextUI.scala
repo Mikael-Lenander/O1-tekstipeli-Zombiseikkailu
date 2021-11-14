@@ -31,14 +31,14 @@ object AdventureTextUI extends App {
     val area = this.player.location
     println("\n" + area.name)
     println("-" * area.name.length)
-    println(area.fullDescription + "\n")
+    println(area.fullDescription)
   }
 
 
   /** Requests a command from the player, plays a game turn accordingly, and prints out a report of what happened.  */
   private def playTurn() = {
     println()
-    val command = readLine("Command: ")
+    val command = readLine("Kirjoita komento: ")
     val turnReport = this.game.playTurn(command)
     if (turnReport.nonEmpty) {
       println(turnReport)

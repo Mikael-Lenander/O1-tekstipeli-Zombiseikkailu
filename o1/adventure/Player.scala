@@ -27,26 +27,42 @@ class Player(startingArea: Area) {
       this.health = min(this.health + number, Player.MaxHealth)
     else
       this.health = max(this.health + number, 0)
-    println(s"elämät: ${this.health}")
   }
 
   def changeFullness(number: Int) = {
-    if (number > 0)
+    val current = this.fullness
+    if (number > 0) {
       this.fullness = min(this.fullness + number, Player.MaxFullness)
-    else
-      this.fullness = max(this.fullness - number, 0)
+    } else {
+      this.fullness = max(this.fullness + number, 0)
+    }
+    fullness - current
   }
 
-  def isAlive = this.fullness > 0 && this.health > 0
+  def stateDescription: String = {
+    val maxRate = 5
+    val fullnessRate = (this.fullness - 1 ) / (Player.MaxFullness / maxRate) + 1
+    val hungerMessage = if (this.fullness <= Player.MaxFullness / maxRate) "\nSinulla alkaa olla kova nälkä. Muista syödä. Voit syödä poimimiasi ruokia komennolla: poimi 'ruoka'" else ""
+    val inventory = if (this.items.nonEmpty) s"\nSinulla on mukana: ${this.items.keys.mkString(", ")}." else ""
+    s"\nKylläisyytesi: ${"\uD83C\uDF57" * fullnessRate + "_" * (maxRate - fullnessRate)}\nTerveydentilasi: ${"♥" * health + "_" * (maxRate - health)}" + hungerMessage + inventory
+  }
+
+  def isAlive = this.health > 0
+
+  def isStarved = this.fullness <= 0
 
   def examine(itemName: String): String =
     this.items.get(itemName).map(_.description).getOrElse(s"Sinulla ei ole esinettä '$itemName'.")
 
-  def get(itemName: String): String = {
+  def get(itemName: String): Option[Item] = {
       val item = this.location.removeItem(itemName)
       item.foreach(item => this.items(item.name) = item)
-      println(this.location.items)
-      item.map(item => s"Poimit esineen '${item.name}'. ${item.description}").getOrElse(s"Alueella ei ole esinettä $itemName")
+      item
+  }
+
+  def pick(itemName: String): String = {
+    val item = this.get(itemName)
+    item.map(item => s"Poimit esineen '${item.name}'. ${item.description}").getOrElse(s"Alueella ei ole esinettä $itemName")
   }
 
   def selectItem(itemName: String): Option[Item] = this.items.get(itemName)
@@ -67,11 +83,12 @@ class Player(startingArea: Area) {
     * is an exit from the player's current location towards the direction name. Returns
     * a description of the result: "You go DIRECTION." or "You can't go DIRECTION." */
   def go(direction: Direction) = {
+    this.changeFullness(-1)
     val destination = this.location.neighbor(direction)
     // msg kertoo, miten alueelta lähteminen mahdollisesti vaikutti pelaajan tilaan.
     val msg = destination.map(_ => this.currentLocation.leave(this, direction)).getOrElse("")
     this.currentLocation = destination.getOrElse(this.currentLocation)
-    if (destination.isDefined) msg else "Et voi mennä suuntaan " + direction + "."
+    if (destination.isDefined) msg + this.stateDescription else "Et voi mennä suuntaan " + direction + "."
   }
 
   /** Signals that the player wants to quit the game. Returns a description of what happened within

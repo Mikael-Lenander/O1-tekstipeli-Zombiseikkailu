@@ -8,23 +8,25 @@ package o1.adventure
 class Action(input: String) {
 
   private val commandText = input.trim.toLowerCase
-  private val verb        = commandText.takeWhile( _ != ' ' )
-  private val modifiers   = commandText.drop(verb.length).trim
+  private val verb        = commandText.takeWhile( _ != ' ' ).toLowerCase
+  private val modifiers   = commandText.drop(verb.length).trim.toLowerCase
 
 
   /** Causes the given player to take the action represented by this object, assuming
     * that the command was understood. Returns a description of what happened as a result
     * of the action (such as "You go west."). The description is returned in an `Option`
     * wrapper; if the command was not recognized, `None` is returned. */
-  def execute(actor: Player): Option[String] = this.verb match {
-    case "go"    => Directions.get(this.modifiers).map(direction => actor.go(direction))
-    case "use" => actor.selectItem(this.modifiers).map(_.use(actor))
-    case "inventory" => Some(actor.inventory)
-    case "get" => Some(actor.get(this.modifiers.toLowerCase))
-    case "examine" => Some(actor.examine(this.modifiers))
-    case "xyzzy" => Some("The grue tastes yummy.")
+  def execute(actor: Player): Option[String] = {
+    this.verb match {
+    case "mene" => Directions.get(this.modifiers).map(actor.go(_))
+    case "pohjoinen" | "etelä" | "itä" | "länsi" => Directions.get(this.verb).map(actor.go(_))
+    case "käytä" => actor.selectItem(this.modifiers).map(_.use(actor))
+    case "poimi" => Some(actor.pick(this.modifiers.toLowerCase))
+    case "tutki" => Some(actor.examine(this.modifiers))
+    case "apua" => Some(Instructions)
     case "quit"  => Some(actor.quit())
     case other   => None
+  }
   }
 
 

@@ -16,14 +16,13 @@ class ZombieHorde(private var _numZombies: Int, private var distance: Int, priva
 
   def approach() = {
     this.distance = max(this.distance - 1, 0)
-    println(s"etäisyys ${distance}")
   }
 
   def attack(player: Player): String = {
     val healthLoss = this._numZombies / 2
     player.changeHealth(-healthLoss)
     if (player.isAlive)
-      s"Huh, pääsit zombien ohi, mutta he onnistuivat raatelemaan sinua. Terveydentilasi heikkeni ${if (healthLoss == 1) "hiukan" else "merkittävästi"}."
+      s"\nHuh, pääsit zombien ohi, mutta ne onnistuivat raatelemaan sinua. Terveydentilasi heikkeni ${healthLoss} yksikköä."
     else
       ""
   }
