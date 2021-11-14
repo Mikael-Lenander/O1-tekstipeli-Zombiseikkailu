@@ -12,6 +12,7 @@ import scala.math._
 object Player {
   val MaxHealth = 5
   val MaxFullness = 25
+  val MaxDisplay = 5
 }
 
 class Player(startingArea: Area) {
@@ -36,15 +37,14 @@ class Player(startingArea: Area) {
     } else {
       this.fullness = max(this.fullness + number, 0)
     }
-    fullness - current
+    fullness - current / Player.MaxDisplay
   }
 
   def stateDescription: String = {
-    val maxRate = 5
-    val fullnessRate = (this.fullness - 1 ) / (Player.MaxFullness / maxRate) + 1
-    val hungerMessage = if (this.fullness <= Player.MaxFullness / maxRate) "\nSinulla alkaa olla kova nälkä. Muista syödä. Voit syödä poimimiasi ruokia komennolla: poimi 'ruoka'" else ""
+    val fullnessRate = (this.fullness - 1 ) / (Player.MaxFullness / Player.MaxDisplay) + 1
+    val hungerMessage = if (this.fullness <= Player.MaxFullness / Player.MaxDisplay) "\nSinulla alkaa olla kova nälkä. Muista syödä. Voit syödä poimimiasi ruokia komennolla: poimi 'ruoka'" else ""
     val inventory = if (this.items.nonEmpty) s"\nSinulla on mukana: ${this.items.keys.mkString(", ")}." else ""
-    s"\nKylläisyytesi: ${"\uD83C\uDF57" * fullnessRate + "_" * (maxRate - fullnessRate)}\nTerveydentilasi: ${"♥" * health + "_" * (maxRate - health)}" + hungerMessage + inventory
+    s"\nKylläisyytesi: ${"\uD83C\uDF57" * fullnessRate + "_" * (Player.MaxDisplay - fullnessRate)}\nTerveydentilasi: ${"♥" * health + "_" * (Player.MaxDisplay - health)}" + hungerMessage + inventory
   }
 
   def isAlive = this.health > 0
@@ -66,6 +66,8 @@ class Player(startingArea: Area) {
   }
 
   def selectItem(itemName: String): Option[Item] = this.items.get(itemName)
+
+  def removeItem(itemName: String) = this.items.remove(itemName)
 
   def has(itemName: String): Boolean = this.items.contains(itemName)
 

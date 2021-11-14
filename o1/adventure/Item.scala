@@ -82,6 +82,7 @@ class Food(name: String, description: String, areaDescription: String, energy: I
 
   def use(player: Player): String = {
     player.changeFullness(energy)
+    player.removeItem(this.name)
     s"Nyt ei pitäisi olla enää nälkä. Kylläisyytesi nousi ${this.energy} yksikköä." + player.stateDescription
   }
 }
@@ -90,6 +91,7 @@ object Medkit extends Item("ensiapupakkaus", "Ensiapupakkauksella voit nostaa no
   val healthIncrease = 2
   def use(player: Player): String = {
       val healthChange = player.changeHealth(healthIncrease)
+      player.removeItem(this.name)
       s"Käytit ensiapupakkauksen. Terveydentilasi parani $healthChange yksikköä." + player.stateDescription
   }
 }

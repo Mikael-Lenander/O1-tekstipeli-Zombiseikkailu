@@ -10,22 +10,22 @@ class Action(input: String) {
   private val commandText = input.trim.toLowerCase
   private val verb        = commandText.takeWhile( _ != ' ' ).toLowerCase
   private val modifiers   = commandText.drop(verb.length).trim.toLowerCase
-
+  private val invalidCommand = "Tuntematon komento: \"" + this.commandText + "\"."
 
   /** Causes the given player to take the action represented by this object, assuming
     * that the command was understood. Returns a description of what happened as a result
     * of the action (such as "You go west."). The description is returned in an `Option`
     * wrapper; if the command was not recognized, `None` is returned. */
-  def execute(actor: Player): Option[String] = {
+  def execute(actor: Player): String = {
     this.verb match {
-    case "mene" => Directions.get(this.modifiers).map(actor.go(_))
-    case "pohjoinen" | "etelä" | "itä" | "länsi" => Directions.get(this.verb).map(actor.go(_))
-    case "käytä" => actor.selectItem(this.modifiers).map(_.use(actor))
-    case "poimi" => Some(actor.pick(this.modifiers))
-    case "tutki" => Some(actor.examine(this.modifiers))
-    case "apua" => Some(Instructions)
-    case "quit"  => Some(actor.quit())
-    case other   => None
+    case "mene" => Directions.get(this.modifiers).map(actor.go(_)).getOrElse(invalidCommand)
+    case "pohjoinen" | "etelä" | "itä" | "länsi" => Directions.get(this.verb).map(actor.go(_)).getOrElse(invalidCommand)
+    case "käytä" => actor.selectItem(this.modifiers).map(_.use(actor)).getOrElse(s"Sinulla ei ole esinettä '${this.modifiers}'.")
+    case "poimi" => actor.pick(this.modifiers)
+    case "tutki" => actor.examine(this.modifiers)
+    case "apua" => Instructions
+    case "quit"  => actor.quit()
+    case other   => invalidCommand
   }
   }
 

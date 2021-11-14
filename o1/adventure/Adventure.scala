@@ -33,7 +33,7 @@ class Adventure {
   private val weaponStash = new PeacefulArea("Maantien pää", "Olet saapunut maantien päähän. Näet metsäpolun, joka johtaa pohjoiseen suureen metsään.", (_, _) => forest1.removeNeighbor(South))
   private val forest2 = new PeacefulArea("Metsä", "Olet keskellä metsää.")
   private val forest3 = new PeacefulArea("Metsä", "Kuljet pitkin metsän itäreunaa.")
-  private val forest4 = new ZombieArea("Metsä", "Kuljet pitkin metsän itäreunaa.", Vector(" Pohjoisessa näet kuolleen selviytyjän makaavan maassa. Ehkä hänellä on jotain arvokasta. Pohjoisesta lähestyy kuitenkin x hengen zombilauma. Noista ei taida päästä ohi ilman asetta..."),
+  private val forest4 = new ZombieArea("Metsä", "Kuljet pitkin metsän itäreunaa.", Vector(" Pohjoisessa näet kuolleen selviytyjän makaavan maassa. Ehkä hänellä on jotain arvokasta. Pohjoisessa on kuitenkin x hengen zombilauma. Noista ei taida päästä ohi käyttämättä asetta..."),
     Some(new ZombieHorde(10, 0, Vector(North))), (area, direction) => if (direction == North) area.eliminateZombieHorde())
   private val forest5 = new PeacefulArea("Metsä", "Olet metsän synkimmässä nurkassa.")
   private val destination = survivorVillage
@@ -62,7 +62,7 @@ class Adventure {
 
   hospital.addItem(Medkit)
   weaponShop.addItem(Knife)
-  groceryStore.addItem(new Food("patukka", "Pitäisi pitää nälän loitolla - ainakin hetken.", "\nPitkän tonkimisen jälkeen löydät hyllyn alta avaamattoman patukan :P." + pickupInstrucion, 5))
+  groceryStore.addItem(new Food("patukka", "Patukan pitäisi pitää nälän loitolla - ainakin hetken.", "\nPitkän tonkimisen jälkeen löydät hyllyn alta avaamattoman patukan :P." + pickupInstrucion, 5))
   weaponStash.addItem(ShotGun)
   forest3.addItem(new Food("pöllö", "Tästä pitäisi riittää ruokaa pitkäksi aikaa :P.", " Näet pöllön tähystelevän puun latvustossa. Jos sinulla sattuisi olemaan haulikko mukana, pöllöstä saisi hyvän lounaan..." + weaponInstruction, 10))
   forest5.addItem(Key)
@@ -106,7 +106,7 @@ class Adventure {
   def playTurn(command: String) = {
     val action = new Action(command)
     val outcomeReport = action.execute(this.player)
-    outcomeReport.getOrElse("Tuntematon komento: \"" + command + "\".")
+    outcomeReport
   }
 
 
