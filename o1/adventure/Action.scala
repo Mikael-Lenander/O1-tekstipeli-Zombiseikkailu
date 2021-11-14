@@ -21,7 +21,7 @@ class Action(input: String) {
     case "mene" => Directions.get(this.modifiers).map(actor.go(_))
     case "pohjoinen" | "etelä" | "itä" | "länsi" => Directions.get(this.verb).map(actor.go(_))
     case "käytä" => actor.selectItem(this.modifiers).map(_.use(actor))
-    case "poimi" => Some(actor.pick(this.modifiers.toLowerCase))
+    case "poimi" => Some(actor.pick(this.modifiers))
     case "tutki" => Some(actor.examine(this.modifiers))
     case "apua" => Some(Instructions)
     case "quit"  => Some(actor.quit())

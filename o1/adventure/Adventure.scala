@@ -62,7 +62,7 @@ class Adventure {
 
   hospital.addItem(Medkit)
   weaponShop.addItem(Knife)
-  groceryStore.addItem(new Food("patukka", "Pitäisi pitää nälän loitolla - ainakin hetken.", "\nPitkän tonkimisen jälkeen löydät hyllyn alta avaamattoman patukan :P.", 5))
+  groceryStore.addItem(new Food("patukka", "Pitäisi pitää nälän loitolla - ainakin hetken.", "\nPitkän tonkimisen jälkeen löydät hyllyn alta avaamattoman patukan :P." + pickupInstrucion, 5))
   weaponStash.addItem(ShotGun)
   forest3.addItem(new Food("pöllö", "Tästä pitäisi riittää ruokaa pitkäksi aikaa :P.", " Näet pöllön tähystelevän puun latvustossa. Jos sinulla sattuisi olemaan haulikko mukana, pöllöstä saisi hyvän lounaan..." + weaponInstruction, 10))
   forest5.addItem(Key)

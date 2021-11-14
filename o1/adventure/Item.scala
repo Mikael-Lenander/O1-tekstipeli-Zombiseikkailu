@@ -27,7 +27,7 @@ abstract class Weapon(name: String, description: String, areaDescription: String
   val noUseForWeaponMsg = "Alueella ei ole mitään, mihin käyttää asetta."
 }
 
-object Knife extends Weapon("puukko", "Puukolla voit nirhata zombeja lähietäisyydeltä. Huonona puolena joudut päästämään zombit kovin lähelle...", " Tiskin takaa löytyy kuitenkin vielä puukko. Se ei ole paras mahdollinen ase, mutta saa luvan kelvata." + pickupInstrucion) {
+object Knife extends Weapon("puukko", "Puukolla voit nirhata zombeja lähietäisyydeltä. Huonona puolena joudut päästämään zombit kovin lähelle, joten saatat ottaa pientä osumaa.", " Tiskin takaa löytyy kuitenkin vielä puukko. Se ei ole paras mahdollinen ase, mutta saa luvan kelvata." + pickupInstrucion) {
 
   def stabZombies(player: Player, location: ZombieArea): String = {
     location.zombieHorde.map(horde => {

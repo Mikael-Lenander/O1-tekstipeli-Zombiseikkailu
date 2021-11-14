@@ -111,7 +111,7 @@ class CabinEntrance(player: Player) extends Area("Mökki", "Seisot mökin edess�
 
   private def visibleNeighbors = if (this.isOpen) this.neighbors else this.neighbors.filter(_._2.name != "Sisällä mökissä")
 
-  override def exitList = "\nVoit edetä suuntiin: " + this.visibleNeighbors.keys.mkString(" ")
+  override def exitList = "\nVoit edetä suuntiin: " + this.visibleNeighbors.keys.mkString(" ") + "."
 
   override def neighbor(direction: Direction): Option[Area] = this.visibleNeighbors.get(direction)
 
