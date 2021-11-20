@@ -11,7 +11,6 @@ class ZombieHorde(private var _numZombies: Int, private var distance: Int, val d
 
   def runningHealthLoss = this._numZombies / 2
 
-  // Palauttaa (zombien määrä, tapettujen zombien määrä)
   def killZombies(number: Int=_numZombies): Tuple2[Int, Int] = {
     val initNum = this._numZombies
     this._numZombies = max(0, this._numZombies - number)

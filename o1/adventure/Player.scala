@@ -12,24 +12,26 @@ import io.AnsiColor._
   * @param startingArea  the initial location of the player */
 object Player {
   val MaxHealth = 5
-  val MaxFullness = 25
+  val MaxFullness = 20
   val MaxDisplay = 5
 }
 
-class Player(startingArea: Area) {
+class Player(val startingArea: Area) {
 
   private var currentLocation = startingArea        // gatherer: changes in relation to the previous location
   private var quitCommandGiven = false              // one-way flag
   private var lostFinalBoss = false
-  private val items = Map[String, Item]("kivääri" -> new Rifle, "avain" -> Key)
+  private val items = Map[String, Item]()
   /*private*/ var health = Player.MaxHealth
   private var fullness = Player.MaxFullness
 
   def changeHealth(number: Int) = {
+    val current = this.health
     if (number > 0)
       this.health = min(this.health + number, Player.MaxHealth)
     else
       this.health = max(this.health + number, 0)
+    this.health - current
   }
 
   def changeFullness(number: Int) = {
@@ -43,6 +45,7 @@ class Player(startingArea: Area) {
   }
 
   def stateDescription: String = {
+    if (!this.isAlive || (this.location == this.startingArea && this.has("rokote"))) return ""
     val fullnessRate = ceil(fullness * 1.0 / (Player.MaxFullness / Player.MaxDisplay)).toInt
     val hungerMessage = if (this.fullness <= Player.MaxFullness / Player.MaxDisplay) s"\n${RED_B}Sinulla alkaa olla kova nälkä. Muista syödä. Voit syödä poimimiasi ruokia komennolla: käytä 'ruoka'.${RESET}" else ""
     val healthMessage = if (this.health <= 0.4 * Player.MaxHealth) s"\n${RED_B}Terveydentilasi on melko heikko. Toivottavasti sinulla on ensiapupakkaus mukanasi.${RESET}" else ""

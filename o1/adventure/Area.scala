@@ -66,9 +66,10 @@ class ZombieArea(name: String, description: String, val zombieDescriptions: Vect
   private var descriptionIndex = 0
 
   def fightingMethods = {
-    this.zombieHorde.filter(_.isClose).map(zombieHorde => {
-      val run = if (this.neighbors.keys.exists(direction => zombieHorde.directions.contains(direction))) s"\nJos juokset zombien ohi, terveydentilasi heikkenee ${zombieHorde.runningHealthLoss} yksikköä." else ""
-      val stab = if (player.has("puukko")) s"\nJos puukotat zombit, terveydentilasi heikkenee ${Knife.healthLoss(zombieHorde.numZombies)} yksikköä." else ""
+    def maxLoss(loss: Int) = min(loss, Player.MaxHealth)
+    this.zombieHorde.filter(horde => horde.isClose && horde.numZombies <= 10).map(zombieHorde => {
+      val run = if (this.neighbors.keys.exists(direction => zombieHorde.directions.contains(direction))) s"\nJos juokset zombien ohi, terveydentilasi heikkenee ${maxLoss(zombieHorde.runningHealthLoss)} yksikköä." else ""
+      val stab = if (player.has("puukko")) s"\nJos puukotat zombit, terveydentilasi heikkenee ${maxLoss(Knife.healthLoss(zombieHorde.numZombies))} yksikköä." else ""
       val shoot = if (player.has("kivääri") && player.rifle.exists(_.hasAmmo)) s"\nJos ammut zombit kiväärillä, ne eivät pääse sinuun käsiksi. ${player.rifle.get.ammoLeftMessage}" else ""
       run + stab + shoot
     }).getOrElse("")
@@ -93,7 +94,7 @@ class ZombieArea(name: String, description: String, val zombieDescriptions: Vect
   }
 }
 
-class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin edessä.", Vector(" Mökin oven edessä parveilee x hengen zombilauma. Sinun on hoideltava ne, jotta pääset sisään."), Some(new ZombieHorde(4, 1, Vector(West))), player) {
+class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin edessä.", Vector(" Mökin oven edessä parveilee x hengen zombilauma. Sinun on hoideltava ne, jotta pääset sisään."), Some(new ZombieHorde(5, 1, Vector(West))), player) {
 
   var isOpen = false
 
@@ -116,42 +117,44 @@ class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin 
 
 }
 
-class Cabin(player: Player) extends Area("Sisällä mökissä", "Olet sisällä mökissä.") {
+class Cabin(player: Player) extends Area("Sisällä mökissä", "Aika palata kotiin.") {
     def zombieHorde = None
 
+    val openingMessage =
+      """Olet sisällä mökissä. Tutkit talon läpikotaisin, kunnes päädyt kylpyhuoneeseen. Avaat peilikaapin ja löydät rokoteannoksia! Näillä ystäväsi pelastuvat!
+        |Olet juuri poistumassa mökistä, kun kuulet selkäsi takana aseen latautuvan. Toinen selviytyjä osoittaa sinua selkään haulikolla.
+        |Selviytyjä: "Mitä ihmettä teet minun kodissani?"
+        |Miten reagoit tilanteeseen? Valitse 'a' tai 'b'.""".stripMargin
+
    val tree = new Root(
-     "Valitse lukuja.",
+     openingMessage,
      Branch(
-       Desicion("a", "1"),
-       "Valintasi on 1",
-       Branch(
-         Desicion("a", "11"),
-         "Valintasi on 11",
-         Leaf(Desicion("a", "111"), "Sait rokotteet :)", false),
-         Leaf(Desicion("b", "112"), "Kuolit :(", true)
+       Desicion("a", "Käänny hitaasti ympäri, ja selitä, ettet tiennyt mökin olevan asuttu."),
+       "Selviytyjä: \"No nyt tiedät, että tämä talo on varattu. Lähde meneen, ennen kuin ammun sinut! Ja rokotteet jäävät tänne.\"",
+       Leaf(
+         Desicion("a", "Sano, että lähdet kyllä, mutta rokotteet tulevat joka tapauksessa mukaasi."),
+         "Selviytyjä kyllästyy uhitteluusi ja ampuu sinut :(",
+         true
        ),
        Branch(
-         Desicion("b", "12"),
-         "Valintasi on 12",
-         Leaf(Desicion("a", "121"), "Sait rokotteet :)", false),
-         Leaf(Desicion("b", "122"), "Kuolit :(", true)
+         Desicion("b", "Anele, että saat ottaa edes osan rokotteista mukaasi, koska ystäväsi tarvitsevat niitä."),
+         "Selviytyjä: \"Miksi minua pitäisi kiinnostaa sinun ystäväsi?\"",
+         Leaf(
+           Desicion("a", "Ehdota selviytyjälle, että hän tulee sinuun mukaasi selviytyjien kylään tapaamaan ystäviäsi. Siellä on paljon turvallisempaa kuin täällä mökissä."),
+           "Selviytyjä suostuu ideaasi ja antaa sinulle rokottensa. Nyt voitte palata kotiin sankareina!",
+           false
+         ),
+         Leaf(
+           Desicion("b", "Heitä selviytyjää lampulla ja pakene ovesta ulos."),
+           "Selviytyjä raivostuu ja ampuu sinut :(",
+           true
+         )
        )
      ),
-     Branch(
-       Desicion("b", "2"),
-       "Valintasi on 2",
-       Branch(
-         Desicion("a", "21"),
-         "Valintasi on 21",
-         Leaf(Desicion("a", "211"), "Sait rokotteet :)", false),
-         Leaf(Desicion("b", "212"), "Kuolit :(", true)
-       ),
-       Branch(
-         Desicion("b", "22"),
-         "Valintasi on 22",
-         Leaf(Desicion("a", "221"), "Sait rokotteet :)", false),
-         Leaf(Desicion("b", "222"), "Kuolit :(", true)
-       )
+     Leaf(
+       Desicion("b", "Näet metrin päässä pöydällä pistoolin. Tartu siihen!"),
+       "Selviytyjä huomaa aikeesi ja ampuu sinut :(",
+       true
      )
    )
 
@@ -170,8 +173,7 @@ class Cabin(player: Player) extends Area("Sisällä mökissä", "Olet sisällä 
   }
 
   def fullDescription = {
-    println(s"Elämät: ${player.health}")
-    if (!this.finalBossFinished) this.state.fullDescription else "Aika palata kotiin." + this.exitList
+    if (!this.finalBossFinished) this.state.fullDescription else this.description + this.exitList
   }
 
 }

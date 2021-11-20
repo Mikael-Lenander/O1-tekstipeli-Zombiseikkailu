@@ -41,7 +41,8 @@ object AdventureTextUI extends App {
     val command = readLine("Kirjoita komento: ")
     val turnReport = this.game.playTurn(command)
     if (turnReport.nonEmpty) {
-      println(turnReport)
+      val newLine = if (command.startsWith("mene") || Directions.keys.toVector.contains(command)) "" else "\n"
+      println(newLine + turnReport)
     }
   }
 

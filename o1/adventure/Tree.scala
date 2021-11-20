@@ -24,7 +24,7 @@ case class Leaf(desicion: Desicion, description: String, isLosing: Boolean) exte
 case class Branch(desicion: Desicion, description: String, left: Tree, right: Tree) extends Tree {
   val options = Map(left.desicion.letter -> left, right.desicion.letter -> right)
 
-  def fullDescription = this.description + "\n" + Vector(left, right).map(node => s"${node.desicion.letter}: ${node.desicion.description}").mkString("\n")
+  def fullDescription = this.description + "\n\n" + Vector(left, right).map(node => s"${node.desicion.letter}: ${node.desicion.description}").mkString("\n")
 
   def isFinished = false
   def isLosing = false
