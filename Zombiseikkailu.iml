@@ -10,7 +10,7 @@
     <orderEntry type="module-library" exported="">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/scala-swing_2.13-2.1.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../Adventure/scala-swing_2.13-2.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
