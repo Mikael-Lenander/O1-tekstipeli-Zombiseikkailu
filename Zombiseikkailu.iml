@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" exported="">
-      <library>
+    <orderEntry type="module-library">
+      <library name="C:\Users\mikae\IdeaProjects\ohjelmointi1\Adventure\scala-swing_2.13-2.1.1.jar">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../Adventure/scala-swing_2.13-2.1.1.jar!/" />
         </CLASSES>
@@ -16,6 +16,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="scala-sdk-2.13.1" level="project" />
+    <orderEntry type="library" exported="" name="scala-sdk-2.13.1" level="project" />
+    <orderEntry type="module" module-name="AdventureDraft" />
   </component>
 </module>

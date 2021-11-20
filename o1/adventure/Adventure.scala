@@ -67,7 +67,7 @@ class Adventure {
   groceryStore.addItem(new Food("patukka", "Patukan pitäisi pitää nälän loitolla - ainakin hetken. Lisää kylläisyyttäsi 1 yksikköä.", "\nPitkän tonkimisen jälkeen löydät hyllyn alta avaamattoman patukan :P." + pickupInstrucion, 4))
   weaponStash.addItem(new Rifle)
   forest2.addItem(new Food("pöllö", "Tästä pitäisi riittää ruokaa pitkäksi aikaa :P. Lisää kylläisyyttäsi 2 yksikköä.", " Näet pöllön tähystelevän puun latvustossa. Jos sinulla sattuisi olemaan kivääri mukana, pöllöstä saisi hyvän lounaan..." + weaponInstruction, 8))
-  forest5.addItem(Key)
+  forest6.addItem(Key)
   cabin.addItem(Vaccine)
 
   /** Determines if the adventure is complete, that is, if the player has won. */

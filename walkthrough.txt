@@ -1,0 +1,35 @@
+Pelin voi läpäistä monella tavalla. Alla on kuvattu nopein tapa.
+Hae kaupungista puukko ja ensiapupakkaus seuraavilla komennoilla:
+itä
+etelä
+etelä
+poimi puukko
+pohjoinen
+länsi
+poimi ensiapupakkaus
+itä
+
+Hae metsästä avain mökkiin:
+pohjoinen
+pohjoinen
+itä
+pohjoinen
+käytä puukko
+käytä ensiapupakkaus
+pohjoinen
+poimi avain
+
+Mene mökkiin:
+etelä
+etelä
+länsi
+länsi
+käytä avain
+
+Selviytyjän saa puolelleen seuraavilla vaihtoehdoilla:
+a
+b
+a
+
+Palaa kotiin:
+länsi
