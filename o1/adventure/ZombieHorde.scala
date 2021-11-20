@@ -1,11 +1,15 @@
 package o1.adventure
 import scala.math.max
 
-class ZombieHorde(private var _numZombies: Int, private var distance: Int, private val directions: Vector[Direction]) {
+class ZombieHorde(private var _numZombies: Int, private var distance: Int, val directions: Vector[Direction]) {
 
   def numZombies = this._numZombies
 
-  def isClose(direction: Direction) = this.distance == 0 && this.directions.contains(direction)
+  def isClose = this.distance == 0
+
+  def isInDirection(direction: Direction) = this.directions.contains(direction)
+
+  def runningHealthLoss = this._numZombies / 2
 
   // Palauttaa (zombien määrä, tapettujen zombien määrä)
   def killZombies(number: Int=_numZombies): Tuple2[Int, Int] = {
@@ -19,10 +23,9 @@ class ZombieHorde(private var _numZombies: Int, private var distance: Int, priva
   }
 
   def attack(player: Player): String = {
-    val healthLoss = this._numZombies / 2
-    player.changeHealth(-healthLoss)
+    player.changeHealth(-this.runningHealthLoss)
     if (player.isAlive)
-      s"\nHuh, pääsit zombien ohi, mutta ne onnistuivat raatelemaan sinua. Terveydentilasi heikkeni ${healthLoss} yksikköä."
+      s"\nHuh, pääsit zombien ohi, mutta ne onnistuivat raatelemaan sinua. Terveydentilasi heikkeni ${this.runningHealthLoss} yksikköä.\n"
     else
       ""
   }

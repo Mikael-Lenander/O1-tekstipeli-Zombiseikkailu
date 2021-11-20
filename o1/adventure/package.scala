@@ -8,8 +8,8 @@ package object adventure {
       |käytä 'esine': käytä mitä tahansa poimimaasi esinettä
       |poimi 'esine': poimi alueelta löytyvä esine
       |tutki 'esine': näyttää esineen ominaisuudet
-      |""".stripMargin
+      |apua: listaa kaikki komennot
+      |lopeta: lopettaa pelin""".stripMargin
   val pickupInstrucion = "\nVoit poimia esineen komennolla: poimi 'esine'."
-  val weaponInstruction = "\nVoit käyttää poimimiasi aseita komennolla: käytä 'ase'"
-
+  val weaponInstruction = "\nVoit käyttää poimimiasi aseita komennolla: käytä 'ase'."
 }

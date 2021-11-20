@@ -2,6 +2,7 @@ package o1.adventure
 
 import scala.collection.mutable.Map
 import scala.math._
+import io.AnsiColor._
 
 
 /** A `Player` object represents a player character controlled by the real-life user of the program.
@@ -37,14 +38,15 @@ class Player(startingArea: Area) {
     } else {
       this.fullness = max(this.fullness + number, 0)
     }
-    fullness - current / Player.MaxDisplay
+    ceil((fullness - current) * 1.0 / Player.MaxDisplay).toInt
   }
 
   def stateDescription: String = {
-    val fullnessRate = (this.fullness - 1 ) / (Player.MaxFullness / Player.MaxDisplay) + 1
-    val hungerMessage = if (this.fullness <= Player.MaxFullness / Player.MaxDisplay) "\nSinulla alkaa olla kova nälkä. Muista syödä. Voit syödä poimimiasi ruokia komennolla: poimi 'ruoka'" else ""
+    val fullnessRate = ceil(fullness * 1.0 / (Player.MaxFullness / Player.MaxDisplay)).toInt
+    val hungerMessage = if (this.fullness <= Player.MaxFullness / Player.MaxDisplay) s"\n${RED_B}Sinulla alkaa olla kova nälkä. Muista syödä. Voit syödä poimimiasi ruokia komennolla: käytä 'ruoka'.${RESET}" else ""
+    val healthMessage = if (this.health <= 0.4 * Player.MaxHealth) s"\n${RED_B}Terveydentilasi on melko heikko. Toivottavasti sinulla on ensiapupakkaus mukanasi.${RESET}" else ""
     val inventory = if (this.items.nonEmpty) s"\nSinulla on mukana: ${this.items.keys.mkString(", ")}." else ""
-    s"\nKylläisyytesi: ${"\uD83C\uDF57" * fullnessRate + "_" * (Player.MaxDisplay - fullnessRate)}\nTerveydentilasi: ${"♥" * health + "_" * (Player.MaxDisplay - health)}" + hungerMessage + inventory
+    s"\nKylläisyytesi: ${"\uD83C\uDF57" * fullnessRate + "_" * (Player.MaxDisplay - fullnessRate)}\nTerveydentilasi: ${"♥" * health + "_" * (Player.MaxDisplay - health)}" + hungerMessage + healthMessage + inventory
   }
 
   def isAlive = this.health > 0
@@ -71,12 +73,16 @@ class Player(startingArea: Area) {
 
   def has(itemName: String): Boolean = this.items.contains(itemName)
 
+  def rifle = this.selectItem("kivääri") match {
+    case Some(rifle: Rifle) => Some(rifle)
+    case _ => None
+  }
+
   def inventory: String =
     if (this.items.nonEmpty) s"You are carrying:\n${this.items.keys.mkString("\n")}" else "You are empty-handed."
 
   /** Determines if the player has indicated a desire to quit the game. */
   def hasQuit = this.quitCommandGiven
-
 
   /** Returns the current location of the player. */
   def location = this.currentLocation
@@ -94,7 +100,7 @@ class Player(startingArea: Area) {
   }
 
   /** Signals that the player wants to quit the game. Returns a description of what happened within
-    * the game as a result (which is the empty string, in this case). */
+    * the game as a result (which is an empty string, in this case). */
   def quit() = {
     this.quitCommandGiven = true
     ""

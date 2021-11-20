@@ -15,33 +15,32 @@ class Adventure {
   val title = "Zombiseikkailu"
 
   private val survivorVillage = new PeacefulArea("Selviytyjien kylä", "Aika lähteä matkaan. Idässä on maantie, jota pitkin pääset eteenpäin.")
+  val player = new Player(survivorVillage)
+
   private val road1 = new PeacefulArea("Maantie", "Kävelet maantietä pitkin kohti itää. Voit jatkaa eteenpäin, mutta etelässä on kaupunki lähellä. Sieltä voi löytyä hyödyllisiä tarvikkeita.")
   private val city = new ZombieArea("Kaupunki", "Olet kaupungissa. Idässä näkyy ruokakauppa, etelässä asekauppa ja lännessä sairaala. Pois kaupungista pääsee menemällä pohjoiseen.\n",
     Vector("Horisontissa näkyy kuitenkin zombilauma. Ehdit käydä vain kahdessa paikassa ennen kuin zombit tulevat. Valitse siis tarkkaan, missä paikoissa haluat käydä.",
            "Ehdit käydä vielä yhdessä paikassa, ennen kuin zombit tulevat.",
            "Zombit ovat jo vallanneet kaupungin. Parasta lähteä takaisin, ennen kuin ne syövät sinut."),
-    Some(new ZombieHorde(30, 3, Vector(East, South, West))))
+    Some(new ZombieHorde(30, 3, Vector(East, South, West))), player)
   private val hospital = new PeacefulArea("Sairaala", "Olet sairaalassa. Näet ympärilläsi kymmenittäin ruumiita...")
   private val weaponShop = new PeacefulArea("Asekauppa", "Olet asekaupassa. Hyllyt on tyhjennetty aikoja sitten.")
   private val groceryStore = new PeacefulArea("Ruokakauppa", "Olet ruokakaupassa. Kaikki jäljellä ovat ruoat näyttävät pilaantuneilta.")
   private val crossRoads = new PeacefulArea("Risteys", "Saavut risteykseen. Pohjoisessa on suuri metsä. Maantie jatkuu etelään. Sieltä kuuluu vaimeaa zombien murinaa." +
     "\nEhkä ne vartioivat jotakin. Kumpaan suuntaan haluat mennä, valinta on sinun.")
   private val road2 = new PeacefulArea("Maantie", "Maantie jatkuu etelään. Zombien murina kuuluu nyt selkeämmin. Vielä on mahdollista kääntyä takaisin.")
-  private val road3 = new ZombieArea("Maantie", "Maantie jatkuu etelään. Loppu häämöttää jo.", Vector(" Edessäsi on pieni zombilauma. Katsot taaksesi, ja huomaat olevasi zombien piirittämä! Toivottavasti sinulla on ase mukanasi." +
-    "\nVoit yrittää juosta zombien ohi, mutta se on hyvin vaarallista..." + weaponInstruction), Some(new ZombieHorde(4, 0, Vector(South))))
-  private val forest1 = new PeacefulArea("Metsä", "Olet metsän reunalla. Tutki ympäristöäsi löytääksesi jotain hyödyllistä.")
+  private val road3 = new ZombieArea("Maantie", "Maantie jatkuu etelään. Loppu häämöttää jo.", Vector(" Edessäsi on pieni zombilauma. Katsot taaksesi, ja huomaat olevasi zombien piirittämä! Toivottavasti sinulla on ase mukana..." + weaponInstruction), Some(new ZombieHorde(4, 0, Vector(South))), player)
+  private val forest1 = new PeacefulArea("Metsä", "Olet metsän eteläreunassa. Metsästä saattaa löytyä jotain hyödyllistä. Lännestä pilkottaa valoa. Mistäköhän se tulee?")
   private val weaponStash = new PeacefulArea("Maantien pää", "Olet saapunut maantien päähän. Näet metsäpolun, joka johtaa pohjoiseen suureen metsään.", (_, _) => forest1.removeNeighbor(South))
   private val forest2 = new PeacefulArea("Metsä", "Olet keskellä metsää.")
   private val forest3 = new PeacefulArea("Metsä", "Kuljet pitkin metsän itäreunaa.")
-  private val forest4 = new ZombieArea("Metsä", "Kuljet pitkin metsän itäreunaa.", Vector(" Pohjoisessa näet kuolleen selviytyjän makaavan maassa. Ehkä hänellä on jotain arvokasta. Pohjoisessa on kuitenkin x hengen zombilauma. Noista ei taida päästä ohi käyttämättä asetta..."),
-    Some(new ZombieHorde(10, 0, Vector(North))), (area, direction) => if (direction == North) area.eliminateZombieHorde())
+  private val forest4 = new ZombieArea("Metsä", "Kuljet pitkin metsän itäreunaa.", Vector(" Pohjoisessa näet kuolleen selviytyjän makaavan maassa. Ehkä hänellä on jotain arvokasta. Pohjoisessa on kuitenkin x hengen zombilauma."),
+    Some(new ZombieHorde(10, 0, Vector(North))), player, (area, direction) => if (direction == North) area.eliminateZombieHorde())
   private val forest5 = new PeacefulArea("Metsä", "Olet metsän synkimmässä nurkassa.")
   private val destination = survivorVillage
 
-  val player = new Player(survivorVillage)
-
   private val cabinEntrance = new CabinEntrance(player)
-  private val cabin = Cabin
+  private val cabin = new Cabin(player)
 
   survivorVillage.setNeighbors(Vector(East -> road1))
             road1.setNeighbors(Vector(East -> crossRoads, South -> city))
@@ -62,9 +61,9 @@ class Adventure {
 
   hospital.addItem(Medkit)
   weaponShop.addItem(Knife)
-  groceryStore.addItem(new Food("patukka", "Patukan pitäisi pitää nälän loitolla - ainakin hetken.", "\nPitkän tonkimisen jälkeen löydät hyllyn alta avaamattoman patukan :P." + pickupInstrucion, 5))
-  weaponStash.addItem(ShotGun)
-  forest3.addItem(new Food("pöllö", "Tästä pitäisi riittää ruokaa pitkäksi aikaa :P.", " Näet pöllön tähystelevän puun latvustossa. Jos sinulla sattuisi olemaan haulikko mukana, pöllöstä saisi hyvän lounaan..." + weaponInstruction, 10))
+  groceryStore.addItem(new Food("patukka", "Patukan pitäisi pitää nälän loitolla - ainakin hetken. Lisää kylläisyyttäsi 1 yksikköä.", "\nPitkän tonkimisen jälkeen löydät hyllyn alta avaamattoman patukan :P." + pickupInstrucion, 5))
+  weaponStash.addItem(new Rifle)
+  forest3.addItem(new Food("pöllö", "Tästä pitäisi riittää ruokaa pitkäksi aikaa :P. Lisää kylläisyyttäsi 2 yksikköä.", " Näet pöllön tähystelevän puun latvustossa. Jos sinulla sattuisi olemaan kivääri mukana, pöllöstä saisi hyvän lounaan..." + weaponInstruction, 10))
   forest5.addItem(Key)
 
   /** Determines if the adventure is complete, that is, if the player has won. */
@@ -91,7 +90,7 @@ class Adventure {
     if (this.isComplete)
       "Home at last... and phew, just in time! Well done!"
     else if (!this.player.isAlive)
-      "Zombit söivät sinut :("
+      "Zombeja oli liikaa. Ne söivät sinut :("
     else if (this.player.isStarved) {
       "Et muistanut syödä ja kuolit nälkään :("
     }

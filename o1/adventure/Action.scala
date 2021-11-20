@@ -16,19 +16,16 @@ class Action(input: String) {
     * that the command was understood. Returns a description of what happened as a result
     * of the action (such as "You go west."). The description is returned in an `Option`
     * wrapper; if the command was not recognized, `None` is returned. */
-  def execute(actor: Player): String = {
-    this.verb match {
+  def execute(actor: Player): String = this.verb match {
     case "mene" => Directions.get(this.modifiers).map(actor.go(_)).getOrElse(invalidCommand)
     case "pohjoinen" | "etelä" | "itä" | "länsi" => Directions.get(this.verb).map(actor.go(_)).getOrElse(invalidCommand)
     case "käytä" => actor.selectItem(this.modifiers).map(_.use(actor)).getOrElse(s"Sinulla ei ole esinettä '${this.modifiers}'.")
     case "poimi" => actor.pick(this.modifiers)
     case "tutki" => actor.examine(this.modifiers)
     case "apua" => Instructions
-    case "quit"  => actor.quit()
+    case "lopeta"  => actor.quit()
     case other   => invalidCommand
   }
-  }
-
 
   /** Returns a textual description of the action object, for debugging purposes. */
   override def toString = this.verb + " (modifiers: " + this.modifiers + ")"

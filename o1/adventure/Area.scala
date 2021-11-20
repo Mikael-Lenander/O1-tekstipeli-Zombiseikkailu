@@ -1,7 +1,7 @@
 package o1.adventure
 
 import scala.collection.mutable.Map
-import scala.math.min
+import scala.math._
 
 /** The class `Area` represents locations in a text adventure game world. A game world
   * consists of areas. In general, an "area" can be pretty much anything: a room, a building,
@@ -13,7 +13,9 @@ import scala.math.min
 
 abstract class Area(val name: String, val description: String, onLeave: (Area, Direction) => Unit=(_,_)=>{}) {
 
-  val neighbors = Map[Direction, Area]()
+  protected val _neighbors = Map[Direction, Area]()
+
+  def neighbors = this._neighbors
  /* private */val items = Map[String, Item]()
   def zombieHorde: Option[ZombieHorde]
 
@@ -29,13 +31,6 @@ abstract class Area(val name: String, val description: String, onLeave: (Area, D
     * is returned in an `Option`; `None` is returned if there is no exit in the given direction. */
   def neighbor(direction: Direction): Option[Area] = this.neighbors.get(direction)
 
-
-  /** Adds an exit from this area to the given area. The neighboring area is reached by moving in
-    * the specified direction from this area. */
-  def setNeighbor(direction: Direction, neighbor: Area) = {
-    this.neighbors += direction -> neighbor
-  }
-
   def leave(player: Player, direction: Direction) = {
     onLeave(this, direction)
     ""
@@ -43,30 +38,20 @@ abstract class Area(val name: String, val description: String, onLeave: (Area, D
 
   /** Adds exits from this area to the given areas. Calling this method is equivalent to calling
     * the `setNeighbor` method on each of the given direction--area pairs.
-    * @param exits  contains pairs consisting of a direction and the neighboring area in that direction
-    * @see [[setNeighbor]] */
+    * @param exits  contains pairs consisting of a direction and the neighboring area in that direction. */
   def setNeighbors(exits: Vector[(Direction, Area)]) = {
-    this.neighbors ++= exits
+    this._neighbors ++= exits
   }
 
   def removeNeighbor(direction: Direction) = {
-    this.neighbors.remove(direction)
+    this._neighbors.remove(direction)
   }
-
-  /** Returns a multi-line description of the area as a player sees it. This includes a basic
-    * description of the area as well as information about exits and items. The return
-    * value has the form "DESCRIPTION\n\nExits available: DIRECTIONS SEPARATED BY SPACES".
-    * The directions are listed in an arbitrary order. */
 
   def exitList = "\nVoit edetä suuntiin: " + this.neighbors.keys.mkString(" ") + "."
 
   def itemDescriptions = this.items.map(_._2.areaDescription).mkString(", ")
 
   def fullDescription: String
-
-
-  /** Returns a single-line description of the area for debugging purposes. */
-  override def toString = this.name + ": " + this.description.replaceAll("\n", " ").take(150)
 
 }
 
@@ -77,8 +62,17 @@ class PeacefulArea(name: String, description: String, onLeave: (Area, Direction)
   def fullDescription = this.description + this.itemDescriptions + this.exitList
 }
 
-class ZombieArea(name: String, description: String, val zombieDescriptions: Vector[String], var zombieHorde: Option[ZombieHorde], onLeave: (ZombieArea, Direction) => Unit=(_,_)=>{}) extends Area(name, description) {
+class ZombieArea(name: String, description: String, val zombieDescriptions: Vector[String], var zombieHorde: Option[ZombieHorde], player: Player, onLeave: (ZombieArea, Direction) => Unit=(_,_)=>{}) extends Area(name, description) {
   private var descriptionIndex = 0
+
+  def fightingMethods = {
+    this.zombieHorde.filter(_.isClose).map(zombieHorde => {
+      val run = if (this.neighbors.keys.exists(direction => zombieHorde.directions.contains(direction))) s"\nJos juokset zombien ohi, terveydentilasi heikkenee ${zombieHorde.runningHealthLoss} yksikköä." else ""
+      val stab = if (player.has("puukko")) s"\nJos puukotat zombit, terveydentilasi heikkenee ${Knife.healthLoss(zombieHorde.numZombies)} yksikköä." else ""
+      val shoot = if (player.has("kivääri") && player.rifle.exists(_.hasAmmo)) "\nJos ammut zombit kiväärillä, ne eivät pääse sinuun käsiksi." else ""
+      run + stab + shoot
+    }).getOrElse("")
+  }
 
   def eliminateZombieHorde() = {
     this.zombieHorde = None
@@ -87,39 +81,79 @@ class ZombieArea(name: String, description: String, val zombieDescriptions: Vect
   override def leave(player: Player, direction: Direction) = {
     this.descriptionIndex = min(this.descriptionIndex + 1, this.zombieDescriptions.size - 1)
     this.zombieHorde.foreach(_.approach())
-    val attackMgs = this.zombieHorde.filter(_.isClose(direction)).map(_.attack(player)).getOrElse("")
+    val attackMgs = this.zombieHorde.filter(horde => horde.isClose && horde.isInDirection(direction)).map(_.attack(player)).getOrElse("")
     onLeave(this, direction)
     attackMgs
   }
 
+  def zombieDescription = this.zombieHorde.map(horde => this.zombieDescriptions(descriptionIndex).replace("x", horde.numZombies.toString) + this.fightingMethods).getOrElse("")
+
   def fullDescription = {
-    val zombieDescription = this.zombieHorde.map(horde => this.zombieDescriptions(descriptionIndex).replace("x", horde.numZombies.toString)).getOrElse("")
-    this.description + zombieDescription + this.exitList
+    this.description + this.zombieDescription + this.exitList
   }
 }
 
-class CabinEntrance(player: Player) extends Area("Mökki", "Seisot mökin edessä. Ehkä löytämäsi avain sopii lukkoon.") {
-  val noKeyDescription = "Löydät metsästä mökin. Kokeilet avata oven, mutta se on lukossa. Ehkä lähistöltä löytyy avain siihen."
-
-  def zombieHorde = None
+class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin edessä.", Vector(" Mökin oven edessä parveilee x hengen zombilauma. Sinun on hoideltava ne, jotta pääset sisään."), Some(new ZombieHorde(4, 1, Vector(West))), player) {
 
   var isOpen = false
 
   def open() = {
-    isOpen = true
+    if (this.zombieHorde.isEmpty) {
+      isOpen = true
+      true
+    } else false
   }
 
-  private def visibleNeighbors = if (this.isOpen) this.neighbors else this.neighbors.filter(_._2.name != "Sisällä mökissä")
+  override def neighbors = if (this.isOpen) this._neighbors else this._neighbors.filter(_._2.name != "Sisällä mökissä")
 
-  override def exitList = "\nVoit edetä suuntiin: " + this.visibleNeighbors.keys.mkString(" ") + "."
+  def hasKeyDescription = if (player.has("avain")) " Kokeile, sopiiko löytämäsi avain siihen." else " Kokeilet avata mökin oven, mutta se on lukossa. Ehkä lähistöltä löytyy avain siihen."
 
-  override def neighbor(direction: Direction): Option[Area] = this.visibleNeighbors.get(direction)
+  override def fullDescription = {
+    val isZombieHorde = this.zombieHorde.exists(_.isClose)
+    if (isZombieHorde) super.fullDescription else this.description + this.hasKeyDescription + this.exitList
+  }
 
-  def fullDescription = (if (player.has("avain")) this.description else this.noKeyDescription) + this.exitList
 }
 
-object Cabin extends Area("Sisällä mökissä", "") {
+class Cabin(player: Player) extends Area("Sisällä mökissä", "Olet sisällä mökissä.") {
     def zombieHorde = None
 
-  def fullDescription = this.description
+    val tree = new Root(
+     Branch(
+       Desicion("a", "1"),
+       Branch(
+         Desicion("a", "11"),
+         Leaf(Desicion("a", "111"), true),
+         Leaf(Desicion("b", "112"), false)
+       ),
+       Branch(
+         Desicion("b", "12"),
+         Leaf(Desicion("a", "121"), true),
+         Leaf(Desicion("b", "122"), false)
+       )
+     ),
+     Branch(
+       Desicion("b", "2"),
+       Branch(
+         Desicion("a", "21"),
+         Leaf(Desicion("a", "211"), true),
+         Leaf(Desicion("b", "212"), false)
+       ),
+       Branch(
+         Desicion("b", "22"),
+         Leaf(Desicion("a", "221"), true),
+         Leaf(Desicion("b", "222"), false)
+       )
+     )
+   )
+
+  def execute() = {
+    this.tree.execute
+  }
+
+  def fullDescription = {
+    tree.initialize()
+    val playerWins = this.execute()
+    if (playerWins) "Voitit" else "Hävisit"
+  }
 }
