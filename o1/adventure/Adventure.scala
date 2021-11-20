@@ -15,14 +15,15 @@ class Adventure {
   val title = "Zombiseikkailu"
 
   private val survivorVillage = new PeacefulArea("Selviytyjien kylä", "Aika lähteä matkaan. Idässä on maantie, jota pitkin pääset eteenpäin.")
-  val player = new Player(survivorVillage)
+  private val forest1 = new PeacefulArea("Metsä", "Olet metsän eteläreunassa. Metsästä saattaa löytyä jotain hyödyllistä. Lännestä pilkottaa valoa. Mistäköhän se tulee?")
+  val player = new Player(forest1)
 
   private val road1 = new PeacefulArea("Maantie", "Kävelet maantietä pitkin kohti itää. Voit jatkaa eteenpäin, mutta etelässä on kaupunki lähellä. Sieltä voi löytyä hyödyllisiä tarvikkeita.")
   private val city = new ZombieArea("Kaupunki", "Olet kaupungissa. Idässä näkyy ruokakauppa, etelässä asekauppa ja lännessä sairaala. Pois kaupungista pääsee menemällä pohjoiseen.\n",
     Vector("Horisontissa näkyy kuitenkin zombilauma. Ehdit käydä vain kahdessa paikassa ennen kuin zombit tulevat. Valitse siis tarkkaan, missä paikoissa haluat käydä.",
            "Ehdit käydä vielä yhdessä paikassa, ennen kuin zombit tulevat.",
            "Zombit ovat jo vallanneet kaupungin. Parasta lähteä takaisin, ennen kuin ne syövät sinut."),
-    Some(new ZombieHorde(30, 3, Vector(East, South, West))), player)
+    Some(new ZombieHorde(30, 2, Vector(East, South, West))), player)
   private val hospital = new PeacefulArea("Sairaala", "Olet sairaalassa. Näet ympärilläsi kymmenittäin ruumiita...")
   private val weaponShop = new PeacefulArea("Asekauppa", "Olet asekaupassa. Hyllyt on tyhjennetty aikoja sitten.")
   private val groceryStore = new PeacefulArea("Ruokakauppa", "Olet ruokakaupassa. Kaikki jäljellä ovat ruoat näyttävät pilaantuneilta.")
@@ -30,7 +31,6 @@ class Adventure {
     "\nEhkä ne vartioivat jotakin. Kumpaan suuntaan haluat mennä, valinta on sinun.")
   private val road2 = new PeacefulArea("Maantie", "Maantie jatkuu etelään. Zombien murina kuuluu nyt selkeämmin. Vielä on mahdollista kääntyä takaisin.")
   private val road3 = new ZombieArea("Maantie", "Maantie jatkuu etelään. Loppu häämöttää jo.", Vector(" Edessäsi on pieni zombilauma. Katsot taaksesi, ja huomaat olevasi zombien piirittämä! Toivottavasti sinulla on ase mukana..." + weaponInstruction), Some(new ZombieHorde(4, 0, Vector(South))), player)
-  private val forest1 = new PeacefulArea("Metsä", "Olet metsän eteläreunassa. Metsästä saattaa löytyä jotain hyödyllistä. Lännestä pilkottaa valoa. Mistäköhän se tulee?")
   private val weaponStash = new PeacefulArea("Maantien pää", "Olet saapunut maantien päähän. Näet metsäpolun, joka johtaa pohjoiseen suureen metsään.", (_, _) => forest1.removeNeighbor(South))
   private val forest2 = new PeacefulArea("Metsä", "Olet keskellä metsää.")
   private val forest3 = new PeacefulArea("Metsä", "Kuljet pitkin metsän itäreunaa.")
@@ -58,6 +58,7 @@ class Adventure {
           forest4.setNeighbors(Vector(North -> forest5, South -> forest3, West -> forest2))
           forest5.setNeighbors(Vector(South -> forest4))
     cabinEntrance.setNeighbors(Vector(East -> forest1, West -> cabin))
+            cabin.setNeighbors(Vector(West -> survivorVillage))
 
   hospital.addItem(Medkit)
   weaponShop.addItem(Knife)
@@ -65,6 +66,7 @@ class Adventure {
   weaponStash.addItem(new Rifle)
   forest3.addItem(new Food("pöllö", "Tästä pitäisi riittää ruokaa pitkäksi aikaa :P. Lisää kylläisyyttäsi 2 yksikköä.", " Näet pöllön tähystelevän puun latvustossa. Jos sinulla sattuisi olemaan kivääri mukana, pöllöstä saisi hyvän lounaan..." + weaponInstruction, 10))
   forest5.addItem(Key)
+  cabin.addItem(Vaccine)
 
   /** Determines if the adventure is complete, that is, if the player has won. */
   def isComplete = {
@@ -72,7 +74,7 @@ class Adventure {
   }
 
   /** Determines whether the player has won, lost, or quit, thereby ending the game. */
-  def isOver = this.isComplete || this.player.hasQuit || !player.isAlive || player.isStarved
+  def isOver = this.isComplete || this.player.hasQuit || !player.isAlive || player.isStarved || player.finalBossLost
 
   /** Returns a message that is to be displayed to the player at the beginning of the game. */
   def welcomeMessage = {
@@ -88,11 +90,14 @@ class Adventure {
     * will be different depending on whether or not the player has completed their quest. */
   def goodbyeMessage = {
     if (this.isComplete)
-      "Home at last... and phew, just in time! Well done!"
+      "Onneksi olkoon! Pääsit takaisin selviytyjien kotiin rokotteiden kanssa ja pelastit ystäväsi :)"
     else if (!this.player.isAlive)
       "Zombeja oli liikaa. Ne söivät sinut :("
     else if (this.player.isStarved) {
       "Et muistanut syödä ja kuolit nälkään :("
+    }
+    else if (this.player.finalBossLost) {
+      "Hävisit pääpahikselle"
     }
     else  // game over due to player quitting
       "Luovuttaja!"
@@ -104,8 +109,15 @@ class Adventure {
     * case, no turns elapse. */
   def playTurn(command: String) = {
     val action = new Action(command)
-    val outcomeReport = action.execute(this.player)
-    outcomeReport
+    player.location match {
+      case cabin: Cabin => {
+        if (!cabin.finalBossFinished)
+          action.executeFinalBoss(cabin)
+        else
+            action.execute(this.player)
+      }
+      case _ => action.execute(this.player)
+    }
   }
 
 

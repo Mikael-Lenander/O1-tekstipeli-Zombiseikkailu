@@ -22,9 +22,15 @@ class Action(input: String) {
     case "käytä" => actor.selectItem(this.modifiers).map(_.use(actor)).getOrElse(s"Sinulla ei ole esinettä '${this.modifiers}'.")
     case "poimi" => actor.pick(this.modifiers)
     case "tutki" => actor.examine(this.modifiers)
+    case "varustus" => actor.inventory
     case "apua" => Instructions
     case "lopeta"  => actor.quit()
     case other   => invalidCommand
+  }
+
+  def executeFinalBoss(cabin: Cabin): String = this.verb match {
+    case "a" | "b" => cabin.execute(verb)
+    case _ => "Syötä a tai b."
   }
 
   /** Returns a textual description of the action object, for debugging purposes. */

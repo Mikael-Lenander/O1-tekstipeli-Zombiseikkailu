@@ -1,66 +1,33 @@
 package o1.adventure
-import scala.io.StdIn.readLine
 
 case class Desicion(letter: String, description: String)
 
 sealed trait Tree {
-  val value: Desicion
+  def desicion: Desicion
 
-  def initialize(): Unit
-  def execute: Boolean
-  }
+  def fullDescription: String
 
-case class Leaf(value: Desicion, isWinning: Boolean) extends Tree {
-  def initialize() = {}
+  def options: Map[String, Tree]
 
-  def execute = this.isWinning
-}
-case class Branch(value: Desicion, left: Tree, right: Tree) extends Tree {
-  val options = Map(left.value.letter -> left, right.value.letter -> right)
+  def isFinished: Boolean
 
-  def initialize() = println(this.value.description + "\n" + Vector(left, right).map(node => s"${node.value.letter}: ${node.value.description}").mkString("\n"))
-
-  def execute = {
-    val input = readLine()
-    val child = this.options(input)
-    child.initialize()
-    child.execute
-  }
+  def isLosing: Boolean
 }
 
-class Root(left: Tree, right: Tree) extends Branch(Desicion("", ""), left, right)
+case class Leaf(desicion: Desicion, description: String, isLosing: Boolean) extends Tree {
+  val options = Map()
 
-object Test extends App {
-/*   val tree = new Root(
-     Branch(
-       Desicion("a", "1"),
-       Branch(
-         Desicion("a", "11"),
-         Leaf(Desicion("a", "111")),
-         Leaf(Desicion("b", "112"))
-       ),
-       Branch(
-         Desicion("b", "12"),
-         Leaf(Desicion("a", "121")),
-         Leaf(Desicion("b", "122"))
-       )
-     ),
-     Branch(
-       Desicion("b", "2"),
-       Branch(
-         Desicion("a", "21"),
-         Leaf(Desicion("a", "211")),
-         Leaf(Desicion("b", "212"))
-       ),
-       Branch(
-         Desicion("b", "22"),
-         Leaf(Desicion("a", "221")),
-         Leaf(Desicion("b", "222"))
-       )
-     )
-   )
+  def fullDescription = this.description
 
-  println(tree.initialize)
-  println(tree.execute)*/
-
+  def isFinished = true
 }
+case class Branch(desicion: Desicion, description: String, left: Tree, right: Tree) extends Tree {
+  val options = Map(left.desicion.letter -> left, right.desicion.letter -> right)
+
+  def fullDescription = this.description + "\n" + Vector(left, right).map(node => s"${node.desicion.letter}: ${node.desicion.description}").mkString("\n")
+
+  def isFinished = false
+  def isLosing = false
+}
+
+class Root(description: String, left: Tree, right: Tree) extends Branch(Desicion("", ""), description, left, right)

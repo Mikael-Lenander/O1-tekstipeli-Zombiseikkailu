@@ -20,8 +20,9 @@ class Player(startingArea: Area) {
 
   private var currentLocation = startingArea        // gatherer: changes in relation to the previous location
   private var quitCommandGiven = false              // one-way flag
-  private val items = Map[String, Item]()
-  private var health = Player.MaxHealth
+  private var lostFinalBoss = false
+  private val items = Map[String, Item]("kivääri" -> new Rifle, "avain" -> Key)
+  /*private*/ var health = Player.MaxHealth
   private var fullness = Player.MaxFullness
 
   def changeHealth(number: Int) = {
@@ -45,13 +46,15 @@ class Player(startingArea: Area) {
     val fullnessRate = ceil(fullness * 1.0 / (Player.MaxFullness / Player.MaxDisplay)).toInt
     val hungerMessage = if (this.fullness <= Player.MaxFullness / Player.MaxDisplay) s"\n${RED_B}Sinulla alkaa olla kova nälkä. Muista syödä. Voit syödä poimimiasi ruokia komennolla: käytä 'ruoka'.${RESET}" else ""
     val healthMessage = if (this.health <= 0.4 * Player.MaxHealth) s"\n${RED_B}Terveydentilasi on melko heikko. Toivottavasti sinulla on ensiapupakkaus mukanasi.${RESET}" else ""
-    val inventory = if (this.items.nonEmpty) s"\nSinulla on mukana: ${this.items.keys.mkString(", ")}." else ""
+    val inventory = if (this.items.nonEmpty) this.inventory else ""
     s"\nKylläisyytesi: ${"\uD83C\uDF57" * fullnessRate + "_" * (Player.MaxDisplay - fullnessRate)}\nTerveydentilasi: ${"♥" * health + "_" * (Player.MaxDisplay - health)}" + hungerMessage + healthMessage + inventory
   }
 
   def isAlive = this.health > 0
 
   def isStarved = this.fullness <= 0
+
+  def finalBossLost = this.lostFinalBoss
 
   def examine(itemName: String): String =
     this.items.get(itemName).map(_.description).getOrElse(s"Sinulla ei ole esinettä '$itemName'.")
@@ -79,7 +82,7 @@ class Player(startingArea: Area) {
   }
 
   def inventory: String =
-    if (this.items.nonEmpty) s"You are carrying:\n${this.items.keys.mkString("\n")}" else "You are empty-handed."
+    if (this.items.nonEmpty) s"\nSinulla on mukana: ${this.items.keys.mkString(", ")}." else "Sinulla ei ole esineitä."
 
   /** Determines if the player has indicated a desire to quit the game. */
   def hasQuit = this.quitCommandGiven
@@ -104,6 +107,11 @@ class Player(startingArea: Area) {
   def quit() = {
     this.quitCommandGiven = true
     ""
+  }
+
+  def loseFinalBoss(message: String) = {
+    this.lostFinalBoss = true
+    message
   }
 
   /** Returns a brief description of the player's state, for debugging purposes. */

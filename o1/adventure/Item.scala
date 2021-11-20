@@ -25,7 +25,7 @@ abstract class Weapon(name: String, description: String, areaDescription: String
 
   def use(player: Player): String
 
-  def noUseForWeaponMsg = s"Alueella ei ole mitään, mihin käyttää ${this.name}a."
+  def noUseForWeaponMsg(name: String) = s"Alueella ei ole mitään, mihin käyttää $name."
 }
 
 object Knife extends Weapon("puukko", "Puukolla voit nirhata vastaantulevia zombeja. Koska joudut käyttämään puukkoa lähietäisyydeltä,\nzombit ehtivät yleensä vahingoittamaan sinua. Käytä siis puukkoa varoen!", " Tiskin takaa löytyy kuitenkin vielä puukko. Se ei ole paras mahdollinen ase, mutta saa luvan kelvata." + pickupInstrucion) {
@@ -41,13 +41,13 @@ object Knife extends Weapon("puukko", "Puukolla voit nirhata vastaantulevia zomb
         s"Onnistuit puukottamaan kaikki zombit, mutta ne ehtivät raadella sinua. Terveydentilasi huononi ${this.healthLoss(zombiesKilled)} yksikköä.\n" + player.stateDescription
       else
         ""
-    }).getOrElse(noUseForWeaponMsg)
+    }).getOrElse(noUseForWeaponMsg("puukkoa"))
   }
 
   def use(player: Player) = {
     player.location match {
       case location: ZombieArea => this.stabZombies(player, location)
-      case _ => noUseForWeaponMsg
+      case _ => noUseForWeaponMsg("puukkoa")
     }
   }
 }
@@ -57,10 +57,12 @@ class Rifle extends Weapon("kivääri", "Kiväärillä voit ampua zombit turvall
 
   def hasAmmo = ammunitionLeft > 0
 
+  def ammoLeftMessage = s"Sinulla on ${this.ammunitionLeft} luotia jäljellä."
+
   def shootBird(player: Player): String = {
     val bird = player.get("pöllö")
     bird.foreach(_ => this.ammunitionLeft -= 1)
-    val birdMsg = bird.map(_ => "Ammuit pöllön alas ja poimit sen. Nyt ei pitäisi ruoan loppua äkkiä :P.").getOrElse(noUseForWeaponMsg)
+    val birdMsg = bird.map(_ => s"Ammuit pöllön alas ja poimit sen. Nyt ei pitäisi ruoan loppua äkkiä :P. ${this.ammoLeftMessage}").getOrElse(noUseForWeaponMsg("kivääriä"))
     birdMsg + player.stateDescription
   }
 
@@ -69,8 +71,8 @@ class Rifle extends Weapon("kivääri", "Kiväärillä voit ampua zombit turvall
         val (zombiesLeft, zombiesKilled) = horde.killZombies(ammunitionLeft)
         this.ammunitionLeft -= zombiesKilled
         if (zombiesLeft == 0) location.eliminateZombieHorde()
-        if (zombiesLeft > 0) s"Voi ei! Ammukset loppuivat kesken. Zombeja on vielä $zombiesLeft jäljellä.\n" + player.stateDescription else "Onnistuit ampumaan kaikki zombit."
-      }).getOrElse(noUseForWeaponMsg)
+        if (zombiesLeft > 0) s"Voi ei! Ammukset loppuivat kesken. Zombeja on vielä $zombiesLeft jäljellä.\n" + player.stateDescription else s"Onnistuit ampumaan kaikki zombit. ${this.ammoLeftMessage}"
+      }).getOrElse(noUseForWeaponMsg("kivääriä"))
   }
 
   def use(player: Player) = {
@@ -78,6 +80,7 @@ class Rifle extends Weapon("kivääri", "Kiväärillä voit ampua zombit turvall
     else player.location match {
       case location: PeacefulArea => this.shootBird(player)
       case location: ZombieArea => this.shootZombies(location, player)
+      case _ => noUseForWeaponMsg("kivääriä")
     }
   }
 }
@@ -109,7 +112,7 @@ object Key extends Item("avain", "Ehkä avain sopii johonkin lähellä olevaan l
           player.go(West)
           "Mökin ovi aukeaa. Menet sisään."
         } else {
-          "Et voi avata ovea, koska se on zombien piirittämä"
+          "Et voi avata ovea, koska se on zombien piirittämä."
         }
       }
       case _ => "Täällä ei taida olla mitään, mihin avainta voisi käyttää."
@@ -117,6 +120,6 @@ object Key extends Item("avain", "Ehkä avain sopii johonkin lähellä olevaan l
   }
 }
 
-object Vaccine extends Item("rokote", "Rokotteella pelastat kaikki sairaat ystäväsi :)", " Tutkit kaikki huoneet läpi, kunnes saavut keittiöön ja näet pöydällä rokoteannoksia!! Ota ne ja pelasta kaverisi!") {
-  def use(player: Player) = ""
+object Vaccine extends Item("rokote", "Rokotteilla saat pelastettua sairaat ystäväsi selviytyjien kylässä.", "") {
+  def use(player: Player) = "Vie nämä selviytyjien kylään ja pelasta kaverisi."
 }

@@ -69,7 +69,7 @@ class ZombieArea(name: String, description: String, val zombieDescriptions: Vect
     this.zombieHorde.filter(_.isClose).map(zombieHorde => {
       val run = if (this.neighbors.keys.exists(direction => zombieHorde.directions.contains(direction))) s"\nJos juokset zombien ohi, terveydentilasi heikkenee ${zombieHorde.runningHealthLoss} yksikköä." else ""
       val stab = if (player.has("puukko")) s"\nJos puukotat zombit, terveydentilasi heikkenee ${Knife.healthLoss(zombieHorde.numZombies)} yksikköä." else ""
-      val shoot = if (player.has("kivääri") && player.rifle.exists(_.hasAmmo)) "\nJos ammut zombit kiväärillä, ne eivät pääse sinuun käsiksi." else ""
+      val shoot = if (player.has("kivääri") && player.rifle.exists(_.hasAmmo)) s"\nJos ammut zombit kiväärillä, ne eivät pääse sinuun käsiksi. ${player.rifle.get.ammoLeftMessage}" else ""
       run + stab + shoot
     }).getOrElse("")
   }
@@ -80,8 +80,8 @@ class ZombieArea(name: String, description: String, val zombieDescriptions: Vect
 
   override def leave(player: Player, direction: Direction) = {
     this.descriptionIndex = min(this.descriptionIndex + 1, this.zombieDescriptions.size - 1)
-    this.zombieHorde.foreach(_.approach())
     val attackMgs = this.zombieHorde.filter(horde => horde.isClose && horde.isInDirection(direction)).map(_.attack(player)).getOrElse("")
+    this.zombieHorde.foreach(_.approach())
     onLeave(this, direction)
     attackMgs
   }
@@ -97,9 +97,11 @@ class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin 
 
   var isOpen = false
 
+  def isZombieHorde = this.zombieHorde.exists(_.isClose)
+
   def open() = {
-    if (!this.zombieHorde.exists(_.isClose)) {
-      isOpen = true
+    if (!this.isZombieHorde) {
+      this.isOpen = true
       true
     } else false
   }
@@ -109,8 +111,7 @@ class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin 
   def hasKeyDescription = if (player.has("avain")) " Kokeile, sopiiko löytämäsi avain siihen." else " Kokeilet avata mökin oven, mutta se on lukossa. Ehkä lähistöltä löytyy avain siihen."
 
   override def fullDescription = {
-    val isZombieHorde = this.zombieHorde.exists(_.isClose)
-    if (isZombieHorde) super.fullDescription else this.description + this.hasKeyDescription + this.exitList
+    if (this.isZombieHorde) super.fullDescription else this.description + this.hasKeyDescription + this.exitList
   }
 
 }
@@ -118,42 +119,59 @@ class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin 
 class Cabin(player: Player) extends Area("Sisällä mökissä", "Olet sisällä mökissä.") {
     def zombieHorde = None
 
-    val tree = new Root(
+   val tree = new Root(
+     "Valitse lukuja.",
      Branch(
        Desicion("a", "1"),
+       "Valintasi on 1",
        Branch(
          Desicion("a", "11"),
-         Leaf(Desicion("a", "111"), true),
-         Leaf(Desicion("b", "112"), false)
+         "Valintasi on 11",
+         Leaf(Desicion("a", "111"), "Sait rokotteet :)", false),
+         Leaf(Desicion("b", "112"), "Kuolit :(", true)
        ),
        Branch(
          Desicion("b", "12"),
-         Leaf(Desicion("a", "121"), true),
-         Leaf(Desicion("b", "122"), false)
+         "Valintasi on 12",
+         Leaf(Desicion("a", "121"), "Sait rokotteet :)", false),
+         Leaf(Desicion("b", "122"), "Kuolit :(", true)
        )
      ),
      Branch(
        Desicion("b", "2"),
+       "Valintasi on 2",
        Branch(
          Desicion("a", "21"),
-         Leaf(Desicion("a", "211"), true),
-         Leaf(Desicion("b", "212"), false)
+         "Valintasi on 21",
+         Leaf(Desicion("a", "211"), "Sait rokotteet :)", false),
+         Leaf(Desicion("b", "212"), "Kuolit :(", true)
        ),
        Branch(
          Desicion("b", "22"),
-         Leaf(Desicion("a", "221"), true),
-         Leaf(Desicion("b", "222"), false)
+         "Valintasi on 22",
+         Leaf(Desicion("a", "221"), "Sait rokotteet :)", false),
+         Leaf(Desicion("b", "222"), "Kuolit :(", true)
        )
      )
    )
 
-  def execute() = {
-    this.tree.execute
+  var state: Tree = this.tree
+
+  def finalBossFinished = this.state.isFinished
+
+  def execute(input: String) = {
+    this.state = this.state.options(input)
+    if (this.finalBossFinished && this.state.isLosing) player.loseFinalBoss(this.state.fullDescription)
+    else if (this.finalBossFinished) {
+      player.get("rokote")
+      this.state.fullDescription
+    }
+    else ""
   }
 
   def fullDescription = {
-    tree.initialize()
-    val playerWins = this.execute()
-    if (playerWins) "Voitit" else "Hävisit"
+    println(s"Elämät: ${player.health}")
+    if (!this.finalBossFinished) this.state.fullDescription else "Aika palata kotiin." + this.exitList
   }
+
 }
