@@ -98,7 +98,7 @@ class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin 
   var isOpen = false
 
   def open() = {
-    if (this.zombieHorde.isEmpty) {
+    if (!this.zombieHorde.exists(_.isClose)) {
       isOpen = true
       true
     } else false
