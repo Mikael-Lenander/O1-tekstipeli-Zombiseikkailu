@@ -3,20 +3,19 @@ package o1.adventure
 import scala.collection.mutable.Map
 import scala.math._
 
-/** The class `Area` represents locations in a text adventure game world. A game world
-  * consists of areas. In general, an "area" can be pretty much anything: a room, a building,
-  * an acre of forest, or something completely different. What different areas have in
-  * common is that players can be located in them and that they can have exits leading to
-  * other, neighboring areas. An area also has a name and a description.
-  * @param name         the name of the area
-  * @param description  a basic description of the area (typically not including information about items) */
-
+/** Area-luokka on runko tarkemmille alueiden määrittelyille.
+  * @param name alueen nimi
+  * @param description alueen lyhyt kuvaus
+  * @param onLeave suorittaa mahdollisen tilamuutoksen, joka aiheutuu alueelta lähtemisestä */
 abstract class Area(val name: String, val description: String, onLeave: (Area, Direction) => Unit=(_,_)=>{}) {
 
   protected val _neighbors = Map[Direction, Area]()
 
   def neighbors = this._neighbors
- /* private */val items = Map[String, Item]()
+
+  private val items = Map[String, Item]()
+
+  /** Jokaiselle alueelle on määritelty, sisältääkö se zombilauman. */
   def zombieHorde: Option[ZombieHorde]
 
   def addItem(item: Item): Unit = {
@@ -27,45 +26,50 @@ abstract class Area(val name: String, val description: String, onLeave: (Area, D
 
   def removeItem(itemName: String): Option[Item] = this.items.remove(itemName)
 
-  /** Returns the area that can be reached from this area by moving in the given direction. The result
-    * is returned in an `Option`; `None` is returned if there is no exit in the given direction. */
   def neighbor(direction: Direction): Option[Area] = this.neighbors.get(direction)
 
-  def leave(player: Player, direction: Direction) = {
+  /** Kutsuu onLeave-parametrifunktiota, joka toteuttaa mahdollisen tilamuutoksen alueelta poistuessa. Esimerkiksi joillakin
+    * alueilla voi käydä vain kerran, jolloin onLeave voi poistaa alueelta naapurin.
+    * @return tyhjä merkkijono */
+  def leave(player: Player, direction: Direction): String = {
     onLeave(this, direction)
     ""
   }
 
-  /** Adds exits from this area to the given areas. Calling this method is equivalent to calling
-    * the `setNeighbor` method on each of the given direction--area pairs.
-    * @param exits  contains pairs consisting of a direction and the neighboring area in that direction. */
-  def setNeighbors(exits: Vector[(Direction, Area)]) = {
+  def setNeighbors(exits: Vector[(Direction, Area)]): Unit = {
     this._neighbors ++= exits
   }
 
-  def removeNeighbor(direction: Direction) = {
+  def removeNeighbor(direction: Direction): Option[Area] = {
     this._neighbors.remove(direction)
   }
 
-  def exitList = "\nVoit edetä suuntiin: " + this.neighbors.keys.mkString(" ") + "."
+  def exitList: String = "\nVoit edetä suuntiin: " + this.neighbors.keys.mkString(" ") + "."
 
-  def itemDescriptions = this.items.map(_._2.areaDescription).mkString(", ")
+  def itemDescriptions: String = this.items.map(_._2.areaDescription).mkString(", ")
 
+  /** Alueen kuvaus määräytyy sen mukaan, millaisesta alueesta on kyse. */
   def fullDescription: String
 
 }
 
+/** Alue, jossa ei ole zombeja. */
 class PeacefulArea(name: String, description: String, onLeave: (Area, Direction) => Unit=(_,_)=>{}) extends Area(name, description, onLeave) {
 
   def zombieHorde = None
 
-  def fullDescription = this.description + this.itemDescriptions + this.exitList
+  def fullDescription: String = this.description + this.itemDescriptions + this.exitList
 }
 
-class ZombieArea(name: String, description: String, val zombieDescriptions: Vector[String], var zombieHorde: Option[ZombieHorde], player: Player, onLeave: (ZombieArea, Direction) => Unit=(_,_)=>{}) extends Area(name, description) {
-  private var descriptionIndex = 0
+/** Alue, jossa on zombeja tai ei ole, koska pelaaja on tappanut ne.
+  * @param zombieDescriptions kuvaukset, jotka liittyvät zombilaumaan. Joillain alueilla on useampia kuvauksia, koska zombilauman tila voi muuttua.
+  * @param zombieHorde mahdollinen zombilauma Option-käöreessä */
+class ZombieArea(name: String, description: String, val zombieDescriptions: Vector[String], var zombieHorde: Option[ZombieHorde], val player: Player, onLeave: (ZombieArea, Direction) => Unit=(_,_)=>{}) extends Area(name, description) {
 
-  def fightingMethods = {
+  private var descriptionIndex = 0 // indeksi, jolla valitaan oikea zombieDescription
+
+  /** Listaa käyttäjälle yksityiskohtaisesti tavat, jolla se voi taistella zombilaumaa vastaan. */
+  def fightingMethods: String = {
     def maxLoss(loss: Int) = min(loss, Player.MaxHealth)
     this.zombieHorde.filter(horde => horde.isClose && horde.numZombies <= 10).map(zombieHorde => {
       val run = if (this.neighbors.keys.exists(direction => zombieHorde.directions.contains(direction))) s"\nJos juokset zombien ohi, terveydentilasi heikkenee ${maxLoss(zombieHorde.runningHealthLoss)} yksikköä." else ""
@@ -75,11 +79,15 @@ class ZombieArea(name: String, description: String, val zombieDescriptions: Vect
     }).getOrElse("")
   }
 
-  def eliminateZombieHorde() = {
+  /** Poistaa zombilauman alueelta. Tämä tapahtuu, kun pelaaja tuhoaa zombilauman. */
+  def eliminateZombieHorde(): Unit = {
     this.zombieHorde = None
   }
 
-  override def leave(player: Player, direction: Direction) = {
+  /** Muuttaa pelaajan ja alueen tilaa alueelta lähtiessä. Jos zombilauman etäisyys (distance, ks. ZombieHorde-luokka) on yli 0, pienentää etäisyyttä ja muuttaa
+    * zombieDescriptionia sen mukaan. Jos etäisyys on 0 ja pelaaja liikkuu samaan suuntaan kuin mistä zombilauma tulee, lauma hyökkää palaajan kimppuun.
+    * @return mahdollinen viesti, joka kertoo, miten pelaajan tila muuttui */
+  override def leave(player: Player, direction: Direction): String = {
     this.descriptionIndex = min(this.descriptionIndex + 1, this.zombieDescriptions.size - 1)
     val attackMgs = this.zombieHorde.filter(horde => horde.isClose && horde.isInDirection(direction)).map(_.attack(player)).getOrElse("")
     this.zombieHorde.foreach(_.approach())
@@ -87,36 +95,41 @@ class ZombieArea(name: String, description: String, val zombieDescriptions: Vect
     attackMgs
   }
 
-  def zombieDescription = this.zombieHorde.map(horde => this.zombieDescriptions(descriptionIndex).replace("x", horde.numZombies.toString) + this.fightingMethods).getOrElse("")
+  /** Palauttaa kuvauksen, joka kertoo zombilauman tilasta, ja miten sitä vastaan voi taistella. */
+  def zombieDescription: String =
+    this.zombieHorde.map(horde => this.zombieDescriptions(descriptionIndex).replace("x", horde.numZombies.toString) + this.fightingMethods).getOrElse("")
 
-  def fullDescription = {
-    this.description + this.zombieDescription + this.exitList
-  }
+  def fullDescription: String = this.description + this.zombieDescription + this.exitList
 }
 
+/** Alue, josta pääsee mökkiin (Cabin) eli pelin loppukohtaukseen. Pelaaja tarvitsee avaimen, jotta tämän alueen kautta pääsee mökkiin sisälle. */
 class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin edessä.", Vector(" Mökin oven edessä parveilee x hengen zombilauma. Sinun on hoideltava ne, jotta pääset sisään."), Some(new ZombieHorde(5, 1, Vector(West))), player) {
 
-  var isOpen = false
+  var isOpen = false // Kertoo, onko mökin ovi auki eli pääseekö mökkiin sisälle.
 
-  def isZombieHorde = this.zombieHorde.exists(_.isClose)
+  def isZombieHorde: Boolean = this.zombieHorde.exists(_.isClose)
 
-  def open() = {
+  /** Avaa ovet mökkiin (Cabin). Avaaminen onnituu vain, jos edessä ei ole zombilaumaa.
+    * @return true, jos oven avaaminen onnistui, muuten false */
+  def open(): Boolean = {
     if (!this.isZombieHorde) {
       this.isOpen = true
       true
     } else false
   }
 
+  /** Jos pelaajalla on avain (Key), tältä alueelta pääsee mökkiin. Muuten mökki ei kuulu alueen naapureihin. */
   override def neighbors = if (this.isOpen) this._neighbors else this._neighbors.filter(_._2.name != "Sisällä mökissä")
 
+  /** Palauttaa viestin, joka antaa pelaajalle vihjeitä avaimesta. */
   def hasKeyDescription = if (player.has("avain")) " Kokeile, sopiiko löytämäsi avain siihen." else " Kokeilet avata mökin oven, mutta se on lukossa. Ehkä lähistöltä löytyy avain siihen."
 
-  override def fullDescription = {
+  override def fullDescription =
     if (this.isZombieHorde) super.fullDescription else this.description + this.hasKeyDescription + this.exitList
-  }
-
 }
 
+/** Pelin loppukohtaus, joka poikkeaa suuresti muista alueista. Sisältää puurakenteen (ks. DesicionTree), joka mallintaa keskustelua toisen selviytyjän kanssa.
+  * Alueella on suostuteltava selviytyjää antamaan rokotteitaan, joilla pelaaja voi pelastaa ystävänsä. */
 class Cabin(player: Player) extends Area("Sisällä mökissä", "Aika palata kotiin.") {
     def zombieHorde = None
 
@@ -126,7 +139,8 @@ class Cabin(player: Player) extends Area("Sisällä mökissä", "Aika palata kot
         |Selviytyjä: "Mitä ihmettä teet minun kodissani?"
         |Miten reagoit tilanteeseen? Valitse 'a' tai 'b'.""".stripMargin
 
-   val tree = new Root(
+   /** Sisältää keskustelun selviytyjän kanssa ja kaikki päätökset, joita pelaaja voi tehdä keskustelun aikana. */
+   val desicionTree = new Root(
      openingMessage,
      Branch(
        Desicion("a", "Käänny hitaasti ympäri, ja selitä, ettet tiennyt mökin olevan asuttu."),
@@ -158,22 +172,26 @@ class Cabin(player: Player) extends Area("Sisällä mökissä", "Aika palata kot
      )
    )
 
-  var state: Tree = this.tree
+  /** Varastoi keskustelun tilan eli puun solmun, johon pelaajan aikaisemmat päätöksen ovat johtaneet. */
+  var node: DecisionTree = this.desicionTree
 
-  def finalBossFinished = this.state.isFinished
+  /** Kertoo, onko keskustelu ohi. */
+  def finalBossFinished: Boolean = this.node.isFinished
 
-  def execute(input: String) = {
-    this.state = this.state.options(input)
-    if (this.finalBossFinished && this.state.isLosing) player.loseFinalBoss(this.state.fullDescription)
+  /** Vie loppukohtausta eteenpäin pelaajan tekemän valinnan perusteella eli etenee puun seuraavaan solmuun. Pelaaja voi joko hävitä tai voittaa
+    * pelin (päätymällä puun lehteen) tai jatkaa keskustelua selviytyjän kanssa eteenpäin. */
+  def execute(input: String): String = {
+    this.node = this.node.options(input)
+    if (this.finalBossFinished && this.node.isLosing) player.loseFinalBoss(this.node.fullDescription)
     else if (this.finalBossFinished) {
       player.get("rokote")
-      this.state.fullDescription
+      this.node.fullDescription
     }
     else ""
   }
 
   def fullDescription = {
-    if (!this.finalBossFinished) this.state.fullDescription else this.description + this.exitList
+    if (!this.finalBossFinished) this.node.fullDescription else this.description + this.exitList
   }
 
 }

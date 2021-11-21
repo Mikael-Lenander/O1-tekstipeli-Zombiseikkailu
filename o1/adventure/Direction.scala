@@ -1,5 +1,6 @@
 package o1.adventure
 
+/** Direction-piirre kuvaa ilmansuuntia, joiden avulla pelaaja liikkuu alueiden välillä. */
 sealed trait Direction {
   val direction: String
   override def toString = this.direction

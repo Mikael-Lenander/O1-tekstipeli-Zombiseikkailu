@@ -1,39 +1,36 @@
 package o1.adventure
 import scala.math.ceil
 
-import javax.tools.DocumentationTool.Location
-
-/** The class `Item` represents items in a text adventure game. Each item has a name
-  * and a  *  longer description. (In later versions of the adventure game, items may
-  * have other features as well.)
-  *
-  * N.B. It is assumed, but not enforced by this class, that items have unique names.
-  * That is, no two items in a game world have the same name.
-  *
-  * @param name         the item's name
-  * @param description  the item's description */
+/** Item-luokka on runko esineille, joita pelaaja voi kerätä pelin aikana.
+  * @param name esineen nimi
+  * @param description esineen tarkempi kuvaus
+  * @param areaDescription kuvaus, joka näkyy alueen (Area) kuvauksessa ja kertoo esineestä pelaajalle */
 abstract class Item(val name: String, val description: String, val areaDescription: String) {
 
+  /** Pelaaja voi käyttää kaikkia esineitä jollain tavalla. */
   def use(player: Player): String
 
-  /** Returns a short textual representation of the item (its name, that is). */
   override def toString = this.name
-
 }
 
+/** Kuvaa esinettä, jolla pelaaja voi taistella zombeja vastaan. */
 abstract class Weapon(name: String, description: String, areaDescription: String) extends Item(name, description, areaDescription) {
 
   def use(player: Player): String
 
-  def noUseForWeaponMsg(name: String) = s"Alueella ei ole mitään, mihin käyttää $name."
+  def noUseForWeaponMsg(name: String): String = s"Alueella ei ole mitään, mihin käyttää $name."
 }
 
+/** Puukko-olio */
 object Knife extends Weapon("puukko", "Puukolla voit nirhata vastaantulevia zombeja. Koska joudut käyttämään puukkoa lähietäisyydeltä,\nzombit ehtivät yleensä vahingoittamaan sinua. Käytä siis puukkoa varoen!", " Tiskin takaa löytyy kuitenkin vielä puukko. Se ei ole paras mahdollinen ase, mutta saa luvan kelvata." + pickupInstrucion) {
 
-  def healthLoss(zombiesKilled: Int) = ceil(zombiesKilled.toDouble / 4).toInt
+  /** Kertoo, kuinka paljon pelaajan terveydentila heikkenee puukkoa käyttäessä (kuitenkin vähemmän kuin jos ei käytä asetta ollenkaan). */
+  def healthLoss(zombiesKilled: Int): Int = ceil(zombiesKilled.toDouble / 4).toInt
 
+  /** Pelaaja hyökkää puukon kanssa alueella olevan zombilauman kimppuun.
+    * @return viesti, joka kertoo, mitä taistelussa tapahtui */
   def stabZombies(player: Player, location: ZombieArea): String = {
-    location.zombieHorde.map(horde => {
+    location.zombieHorde.filter(_.isClose).map(horde => {
       val (_, zombiesKilled) = horde.killZombies()
       location.eliminateZombieHorde()
       player.changeHealth(-this.healthLoss(zombiesKilled))
@@ -44,7 +41,7 @@ object Knife extends Weapon("puukko", "Puukolla voit nirhata vastaantulevia zomb
     }).getOrElse(noUseForWeaponMsg("puukkoa"))
   }
 
-  def use(player: Player) = {
+  def use(player: Player): String = {
     player.location match {
       case location: ZombieArea => this.stabZombies(player, location)
       case _ => noUseForWeaponMsg("puukkoa")
@@ -52,12 +49,13 @@ object Knife extends Weapon("puukko", "Puukolla voit nirhata vastaantulevia zomb
   }
 }
 
+/** Kivääri-luokka */
 class Rifle extends Weapon("kivääri", "Kiväärillä voit ampua zombit turvallisesti kaukaa. Luoteja on vain seitsemän, joten käytä niitä säästeliäästi.", " Huomaat myös, ettö ojassa lepää kivääri! Tuolla zombien tappaminen lienee helpompaa.") {
-  var ammunitionLeft = 7
+  var ammunitionLeft = 7 // Kiväärissä on rajallinen määrä luoteja
 
-  def hasAmmo = ammunitionLeft > 0
+  def hasAmmo: Boolean = ammunitionLeft > 0
 
-  def ammoLeftMessage = s"Sinulla on ${this.ammunitionLeft} luotia jäljellä."
+  def ammoLeftMessage: String = s"Sinulla on ${this.ammunitionLeft} luotia jäljellä."
 
   def shootBird(player: Player): String = {
     val bird = player.get("pöllö")
@@ -66,8 +64,8 @@ class Rifle extends Weapon("kivääri", "Kiväärillä voit ampua zombit turvall
     birdMsg + player.stateDescription
   }
 
-  def shootZombies(location: ZombieArea, player: Player) = {
-      location.zombieHorde.map(horde => {
+  def shootZombies(location: ZombieArea, player: Player): String = {
+      location.zombieHorde.filter(_.isClose).map(horde => {
         val (zombiesLeft, zombiesKilled) = horde.killZombies(ammunitionLeft)
         this.ammunitionLeft -= zombiesKilled
         if (zombiesLeft == 0) location.eliminateZombieHorde()
@@ -75,7 +73,7 @@ class Rifle extends Weapon("kivääri", "Kiväärillä voit ampua zombit turvall
       }).getOrElse(noUseForWeaponMsg("kivääriä"))
   }
 
-  def use(player: Player) = {
+  def use(player: Player): String = {
     if (!this.hasAmmo) "Sinulla ei ole enää ammuksia jäljellä."
     else player.location match {
       case location: PeacefulArea => this.shootBird(player)
@@ -85,6 +83,8 @@ class Rifle extends Weapon("kivääri", "Kiväärillä voit ampua zombit turvall
   }
 }
 
+/** Food-luokka kuvaa ruokia, jotka nostavat pelaajan kylläisyyttä.
+  * @param energy määrä, kuinka paljon pelaajan kylläisyys nousee */
 class Food(name: String, description: String, areaDescription: String, energy: Int) extends Item(name, description, areaDescription) {
 
   def use(player: Player): String = {
@@ -94,8 +94,10 @@ class Food(name: String, description: String, areaDescription: String, energy: I
   }
 }
 
+/** Medkit-olio kuvaa ensiapupakkausta, joka parantaa pelaajan terveydentilaa */
 object Medkit extends Item("ensiapupakkaus", "Ensiapupakkauksella voit paikata pahimmat haavat. Nostaa terveydentilaasi 2 yksikköä.", "Täällä ei näyttäisi olevan rokotteita, mutta löydät ensiapupakkauksen. Jos zombit pääsevät sinuun vielä käsiksi, tästä on hyötyä." + pickupInstrucion) {
   val healthIncrease = 2
+
   def use(player: Player): String = {
       val healthChange = player.changeHealth(healthIncrease)
       player.removeItem(this.name)
@@ -103,6 +105,7 @@ object Medkit extends Item("ensiapupakkaus", "Ensiapupakkauksella voit paikata p
   }
 }
 
+/** Key-olio kuvaa avainta, jota pelaaja tarvitsee päästäkseen rokotteita sisältävään mökkiin. */
 object Key extends Item("avain", "Ehkä avain sopii johonkin lähellä olevaan lukkoon.", " Maassa makaa kuollut selviytyjä. Onkohan hänellä jotain hyödyllisiä tarvikkeita? Tutkit selviytyjän taskut, ja sieltä löytyy avain. Poimi se!") {
   def use(player: Player): String = {
     player.location match {
@@ -120,6 +123,7 @@ object Key extends Item("avain", "Ehkä avain sopii johonkin lähellä olevaan l
   }
 }
 
+/** Vaccine-olio kuvaa rokotteita, jotka pelaajan on tarkoitus pelissä löytää. Rokotteilla ei voi tehdä mitään paitsi ne voi poimia. */
 object Vaccine extends Item("rokote", "Rokotteilla saat pelastettua sairaat ystäväsi selviytyjien kylässä.", "") {
   def use(player: Player) = "Vie nämä selviytyjien kylään ja pelasta kaverisi."
 }
