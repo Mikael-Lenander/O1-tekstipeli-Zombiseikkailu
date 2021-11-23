@@ -128,7 +128,7 @@ class CabinEntrance(player: Player) extends ZombieArea("Mökki", "Seisot mökin 
     if (this.isZombieHorde) super.fullDescription else this.description + this.hasKeyDescription + this.exitList
 }
 
-/** Pelin loppukohtaus, joka poikkeaa suuresti muista alueista. Sisältää puurakenteen (ks. DesicionTree), joka mallintaa keskustelua toisen selviytyjän kanssa.
+/** Pelin loppukohtaus, joka poikkeaa suuresti muista alueista. Sisältää puurakenteen (ks. DecisionTree), joka mallintaa keskustelua toisen selviytyjän kanssa.
   * Alueella on suostuteltava selviytyjää antamaan rokotteitaan, joilla pelaaja voi pelastaa ystävänsä. */
 class Cabin(player: Player) extends Area("Sisällä mökissä", "Aika palata kotiin.") {
     def zombieHorde = None
@@ -143,30 +143,30 @@ class Cabin(player: Player) extends Area("Sisällä mökissä", "Aika palata kot
    val desicionTree = new Root(
      openingMessage,
      Branch(
-       Desicion("a", "Käänny hitaasti ympäri, ja selitä, ettet tiennyt mökin olevan asuttu."),
+       Decision("a", "Käänny hitaasti ympäri, ja selitä, ettet tiennyt mökin olevan asuttu."),
        "Selviytyjä: \"No nyt tiedät, että tämä talo on varattu. Lähde meneen, ennen kuin ammun sinut! Ja rokotteet jäävät tänne.\"",
        Leaf(
-         Desicion("a", "Sano, että lähdet kyllä, mutta rokotteet tulevat joka tapauksessa mukaasi."),
-         "Selviytyjä kyllästyy uhitteluusi ja ampuu sinut :(",
+         Decision("a", "Sano, että lähdet kyllä, mutta otat rokotteet mukaasi, ja avaat ulko-oven."),
+         "Selviytyjä ei anna sinun varastaa rokotteita ja ampuu sinut :(",
          true
        ),
        Branch(
-         Desicion("b", "Anele, että saat ottaa edes osan rokotteista mukaasi, koska ystäväsi tarvitsevat niitä."),
+         Decision("b", "Anele, että saat ottaa edes osan rokotteista mukaasi, koska ystäväsi tarvitsevat niitä."),
          "Selviytyjä: \"Miksi minua pitäisi kiinnostaa sinun ystäväsi?\"",
          Leaf(
-           Desicion("a", "Ehdota selviytyjälle, että hän tulee sinuun mukaasi selviytyjien kylään tapaamaan ystäviäsi. Siellä on paljon turvallisempaa kuin täällä mökissä."),
-           "Selviytyjä suostuu ideaasi ja antaa sinulle rokottensa. Nyt voitte palata kotiin sankareina!",
+           Decision("a", "Ehdota selviytyjälle, että hän tulee sinuun mukaasi selviytyjien kylään tapaamaan ystäviäsi. Siellä on paljon turvallisempaa kuin täällä mökissä."),
+           "Selviytyjä suostuu ideaasi ja antaa sinulle rokotteensa. Nyt voitte palata kotiin sankareina!",
            false
          ),
          Leaf(
-           Desicion("b", "Heitä selviytyjää lampulla ja pakene ovesta ulos."),
+           Decision("b", "Heitä selviytyjää lampulla ja juokse."),
            "Selviytyjä raivostuu ja ampuu sinut :(",
            true
          )
        )
      ),
      Leaf(
-       Desicion("b", "Näet metrin päässä pöydällä pistoolin. Tartu siihen!"),
+       Decision("b", "Näet metrin päässä pöydällä pistoolin. Tartu siihen!"),
        "Selviytyjä huomaa aikeesi ja ampuu sinut :(",
        true
      )

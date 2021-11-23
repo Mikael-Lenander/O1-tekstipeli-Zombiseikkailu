@@ -1,5 +1,5 @@
 package o1.adventure
-
+import io.AnsiColor._
 
 /** Adventure-luokka kuvaa koko pelin tilaa. */
 class Adventure {
@@ -12,7 +12,7 @@ class Adventure {
   private val city = new ZombieArea("Kaupunki", "Olet kaupungissa. Idässä näkyy ruokakauppa, etelässä asekauppa ja lännessä sairaala. Pois kaupungista pääsee menemällä pohjoiseen.\n",
     Vector("Horisontissa näkyy kuitenkin zombilauma. Ehdit käydä vain kahdessa paikassa ennen kuin zombit tulevat. Valitse siis tarkkaan, missä paikoissa haluat käydä.",
            "Ehdit käydä vielä yhdessä paikassa, ennen kuin zombit tulevat.",
-           "Zombit ovat jo vallanneet kaupungin. Parasta lähteä takaisin, ennen kuin ne syövät sinut."),
+           s"${YELLOW_B}Zombit ovat jo vallanneet kaupungin. Parasta lähteä takaisin, ennen kuin ne syövät sinut.${RESET}"),
     Some(new ZombieHorde(30, 2, Vector(East, South, West))), player)
   private val hospital = new PeacefulArea("Sairaala", "Olet sairaalassa. Näet ympärilläsi kymmenittäin ruumiita...")
   private val weaponShop = new PeacefulArea("Asekauppa", "Olet asekaupassa. Hyllyt on tyhjennetty aikoja sitten.")
@@ -24,11 +24,10 @@ class Adventure {
   private val weaponStash = new PeacefulArea("Maantien pää", "Olet saapunut maantien päähän. Näet metsäpolun, joka johtaa pohjoiseen suureen metsään.", (_, _) => forest1.removeNeighbor(South))
   private val forest1 = new PeacefulArea("Metsä", "Olet metsän eteläreunassa. Metsästä saattaa löytyä jotain hyödyllistä. Lännestä pilkottaa valoa. Mistäköhän se tulee?")
   private val forest2 = new PeacefulArea("Metsä", "Olet keskellä metsää.")
-  private val forest3 = new PeacefulArea("Metsä", "Olet metsän pohjoisimmassa kolkassa.")
-  private val forest4 = new PeacefulArea("Metsä", "Kuljet pitkin metsän itäreunaa.")
-  private val forest5 = new ZombieArea("Metsä", "Kuljet pitkin metsän itäreunaa. Pohjoisessa makaa kuollut selviytyjä.", Vector(" Ehkä hänellä on jotain arvokasta. Pohjoisessa on kuitenkin x hengen zombilauma."),
+  private val forest3 = new PeacefulArea("Metsä", "Kuljet pitkin metsän itäreunaa.")
+  private val forest4 = new ZombieArea("Metsä", "Kuljet pitkin metsän itäreunaa. Pohjoisessa makaa kuollut selviytyjä.", Vector(" Ehkä hänellä on jotain arvokasta. Pohjoisessa on kuitenkin x hengen zombilauma."),
     Some(new ZombieHorde(10, 0, Vector(North))), player, (area, direction) => if (direction == North) area.eliminateZombieHorde())
-  private val forest6 = new PeacefulArea("Metsä", "Olet metsän synkimmässä nurkassa.")
+  private val forest5 = new PeacefulArea("Metsä", "Olet metsän synkimmässä nurkassa.")
   private val destination = survivorVillage
 
   private val cabinEntrance = new CabinEntrance(player)
@@ -44,12 +43,11 @@ class Adventure {
             road2.setNeighbors(Vector(North -> crossRoads, South -> road3))
             road3.setNeighbors(Vector(South -> weaponStash))
       weaponStash.setNeighbors(Vector(North -> forest1))
-          forest1.setNeighbors(Vector(North -> forest2, East -> forest4, South -> crossRoads, West -> cabinEntrance))
-          forest2.setNeighbors(Vector(North -> forest3, East -> forest5, South -> forest1))
-          forest3.setNeighbors(Vector(South -> forest2))
-          forest4.setNeighbors(Vector(North -> forest5, West -> forest1))
-          forest5.setNeighbors(Vector(North -> forest6, South -> forest4, West -> forest2))
-          forest6.setNeighbors(Vector(South -> forest5))
+          forest1.setNeighbors(Vector(North -> forest2, East -> forest3, South -> crossRoads, West -> cabinEntrance))
+          forest2.setNeighbors(Vector(East -> forest4, South -> forest1))
+          forest3.setNeighbors(Vector(North -> forest4, West -> forest1))
+          forest4.setNeighbors(Vector(North -> forest5, South -> forest3, West -> forest2))
+          forest5.setNeighbors(Vector(South -> forest4))
     cabinEntrance.setNeighbors(Vector(East -> forest1, West -> cabin))
             cabin.setNeighbors(Vector(West -> survivorVillage))
 
@@ -58,7 +56,7 @@ class Adventure {
   groceryStore.addItem(new Food("patukka", "Patukan pitäisi pitää nälän loitolla - ainakin hetken. Lisää kylläisyyttäsi 1 yksikköä.", "\nPitkän tonkimisen jälkeen löydät hyllyn alta avaamattoman patukan :P." + pickupInstrucion, 4))
   weaponStash.addItem(new Rifle)
   forest2.addItem(new Food("pöllö", "Tästä pitäisi riittää ruokaa pitkäksi aikaa :P. Lisää kylläisyyttäsi 2 yksikköä.", " Näet pöllön tähystelevän puun latvustossa. Jos sinulla sattuisi olemaan kivääri mukana, pöllöstä saisi hyvän lounaan..." + weaponInstruction, 8))
-  forest6.addItem(Key)
+  forest5.addItem(Key)
   cabin.addItem(Vaccine)
 
   def isComplete = {
