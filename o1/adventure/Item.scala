@@ -95,7 +95,7 @@ class Food(name: String, description: String, areaDescription: String, energy: I
 }
 
 /** Medkit-olio kuvaa ensiapupakkausta, joka parantaa pelaajan terveydentilaa */
-object Medkit extends Item("ensiapupakkaus", "Ensiapupakkauksella voit paikata pahimmat haavat. Nostaa terveydentilaasi 2 yksikköä.", "Täällä ei näyttäisi olevan rokotteita, mutta löydät ensiapupakkauksen. Jos zombit pääsevät sinuun vielä käsiksi, tästä on hyötyä." + pickupInstrucion) {
+object Medkit extends Item("ensiapupakkaus", "Ensiapupakkauksella voit paikata pahimmat haavat. Nostaa terveydentilaasi 2 yksikköä.", " Täällä ei näyttäisi olevan rokotteita, mutta löydät ensiapupakkauksen. Jos zombit pääsevät sinuun vielä käsiksi, tästä on hyötyä." + pickupInstrucion) {
   val healthIncrease = 2
 
   def use(player: Player): String = {

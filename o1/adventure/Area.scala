@@ -166,7 +166,7 @@ class Cabin(player: Player) extends Area("Sisällä mökissä", "Aika palata kot
        )
      ),
      Leaf(
-       Decision("b", "Näet metrin päässä pöydällä pistoolin. Tartu siihen!"),
+       Decision("b", "Näet kahden metrin päässä pöydällä pistoolin. Tartu siihen!"),
        "Selviytyjä huomaa aikeesi ja ampuu sinut :(",
        true
      )
